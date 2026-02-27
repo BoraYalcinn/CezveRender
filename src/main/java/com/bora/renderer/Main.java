@@ -11,40 +11,50 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
 
-
-
 public class Main {
 	
-	int[] indices = {
-			
-			
-	};
+	private static Mesh mesh;
+	private static Shader shader;
 	
-	float[] vertices = {
-			-1.f,-1.f,0.f,
-			0.f,-1.f,1.f,
-			1.0f,-1.0f,0.f
-	};
-	
-	
+		
 	public static void main(String[] args) {
 		System.out.println("Hello 3D renderer");
-		Window renderer = new Window();
 		
+		Window renderer = new Window();
 		renderer.run();
 		
+		int[] indices = {0, 1, 2};
+		
+		float[] vertices = {
+		    -0.5f, -0.5f, 0.0f,
+		     0.5f, -0.5f, 0.0f,
+		     0.0f,  0.5f, 0.0f
+		};
+		
+		
+		mesh = new Mesh();
+		mesh.createMesh(vertices, indices);
+		
+		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
 		
 		
 		
 		while(!renderer.getShouldClose()) {
 			
-			 glfwPollEvents();
+			glfwPollEvents();
+			glClear(GL_COLOR_BUFFER_BIT);
 			
+			shader.useShader();
+			mesh.renderMesh();
 			
+			 
 			glUseProgram(0);
 			renderer.swapBuffers();
 			
 		}
+		
+		shader.clearShader();
+		mesh.clearMesh();
 	}
 
 }

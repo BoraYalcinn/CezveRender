@@ -16,8 +16,12 @@ import static org.lwjgl.opengl.GL33C.*;
 public class Shader {
 
 	private int shaderID;
+	
 	private int uniformProjection;
 	private int uniformModel;
+	private int uniformView;
+	
+	
 	
 	public Shader() {
 		shaderID = 0;
@@ -26,34 +30,63 @@ public class Shader {
 	}
 	
 	public Shader(String vertPath,String fragPath) {
+		
+		shaderID = glCreateProgram();
+		
 		String vertexResource = loadResource(vertPath);
 		String fragmentResource = loadResource(fragPath);
 		
-			
-		shaderID = glCreateProgram();
 		
-		
-		
-	}
-	
-	private void compileShader() {
-		
+		compileShader(vertexResource,fragmentResource);
 		
 		
 	}
 	
-	private void addShader() {
+	private void compileShader(String verResource,String fragResource) {
 		
+		addShader(verResource,GL_VERTEX_SHADER);
+		addShader(fragResource,GL_FRAGMENT_SHADER);
+		
+		glLinkProgram(shaderID);
+		
+		if (glGetProgrami(shaderID, GL_LINK_STATUS) == GL_FALSE) {
+            throw new RuntimeException(
+                    "Error linking shader program:\n" +
+                    glGetProgramInfoLog(shaderID));
+        }
+
+        glValidateProgram(shaderID);
+        
+		
+		uniformModel = glGetUniformLocation(shaderID,"model");
+		uniformProjection = glGetUniformLocation(shaderID,"projection");
+		// uniformView = glGetUniformLocation(shaderID, "view");
+		
+	}
+	
+	private void addShader(String source,int type) {
+		int theShader = glCreateShader(type);
+		
+		glShaderSource(theShader,source);
+		glCompileShader(theShader);
+		
+		if (glGetShaderi(theShader, GL_COMPILE_STATUS) == GL_FALSE) {
+            throw new RuntimeException(
+                    "Error compiling shader:\n" +
+                    glGetShaderInfoLog(theShader));
+        }
+
+        glAttachShader(shaderID, theShader);
+
+        glDeleteShader(theShader);
 	}
 	
 	public void useShader() {
-		
-		
+		glUseProgram(shaderID);
 	}
 	
 	public void clearShader() {
-		
-		
+		glDeleteProgram(shaderID);
 	}
 	
 	private String loadResource(String path) {
