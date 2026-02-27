@@ -1,11 +1,5 @@
 package com.bora.renderer;
 
-import org.lwjgl.*;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
-
-import static org.lwjgl.glfw.Callbacks.*;
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
 public class Mesh {
@@ -14,6 +8,8 @@ public class Mesh {
 	public int VAO;
 	public int IBO;
 	public int indexCount;
+	
+	private Transform transform = new Transform();
 	
 	public Mesh() {
 		
@@ -48,6 +44,10 @@ public class Mesh {
 		
 		glBindVertexArray(0);
 		
+	}
+	
+	public Transform getTransform() {
+		return transform;
 	}
 	
 	public void renderMesh() {

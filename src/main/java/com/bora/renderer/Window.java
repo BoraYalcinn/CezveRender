@@ -6,7 +6,6 @@ import org.lwjgl.*;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 
-import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
@@ -17,7 +16,7 @@ public class Window {
 	private long mainWindow;
 	private IntBuffer bufferHeight;
 	private IntBuffer bufferWidth;
-	private boolean[] keys = new boolean[1024];
+	
 	
 	
 	public Window() {
@@ -33,9 +32,6 @@ public class Window {
 	
 	public void run() {
 		initializeWindow();
-		glfwSetKeyCallback(mainWindow, (window, key, scancode, action, mods) -> {
-		    handleKeys(window, key, scancode, action, mods);
-		});
 	}
 	
 	
@@ -71,30 +67,13 @@ public class Window {
 	    glfwMakeContextCurrent(mainWindow);
 	    GL.createCapabilities();
 	    glfwShowWindow(mainWindow);
+	    
+	    glEnable(GL_DEPTH_TEST);
 	}
 	
-	private void handleKeys(long window, int key, int scancode, int action, int mods) {
-	    
-	    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-	        glfwSetWindowShouldClose(window, true);
-	    }
-
-	    
-	    if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-	        System.out.println("W pressed!");
-	    }
-
-	    
-	    if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-	        System.out.println("A pressed!");
-	    }
-
-	    
-	}
-	
-	public boolean[] getKeys() {
-		return keys;
-	}
+	public void clear() {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
 	
 	public void swapBuffers() {
 		glfwSwapBuffers(this.mainWindow);
@@ -104,6 +83,9 @@ public class Window {
 		return glfwWindowShouldClose(mainWindow);
 	}
 	
+	public int getWidth() { return width; }
+    public int getHeight() { return height; }
+	
 	public IntBuffer getBufferWidth() {
 		return bufferWidth;
 	}
@@ -112,5 +94,13 @@ public class Window {
 		return bufferHeight;
 	}
 	
+	public long getWindow() {
+		return mainWindow;
+	}
+	
+	public void destroy() {
+		glfwDestroyWindow(mainWindow);
+		glfwTerminate();
+	}
 	
 }

@@ -38,7 +38,13 @@
             <artifactId>lwjgl-glfw</artifactId>
             <version>${lwjgl.version}</version>
         </dependency>
-
+        <!-- JOML for Math -->
+		<dependency>
+    		<groupId>org.joml</groupId>
+    		<artifactId>joml</artifactId>
+    		<version>1.10.5</version>
+		</dependency>
+	
         <!-- LWJGL Natives for Windows -->
         <dependency>
             <groupId>org.lwjgl</groupId>

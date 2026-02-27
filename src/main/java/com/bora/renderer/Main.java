@@ -1,12 +1,6 @@
 package com.bora.renderer;
 
-import java.nio.*;
 
-import org.lwjgl.*;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
-
-import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
@@ -20,9 +14,12 @@ public class Main {
 	public static void main(String[] args) {
 		System.out.println("Hello 3D renderer");
 		
+		// Create Window
 		Window renderer = new Window();
 		renderer.run();
 		
+		
+		// Mesh Data
 		int[] indices = {0, 1, 2};
 		
 		float[] vertices = {
@@ -31,30 +28,57 @@ public class Main {
 		     0.0f,  0.5f, 0.0f
 		};
 		
-		
+		// Create Mesh
 		mesh = new Mesh();
 		mesh.createMesh(vertices, indices);
 		
+		// Create Camera
+		Camera camera = new Camera(70f, 800f/600f, 0.01f, 100f);
+        camera.getTransform().position.z = 2f;
+        
+        Transform modelTransform = new Transform();
+		
+		// Create Shader
 		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
 		
+		// initialize input
+		Input input = new Input(renderer.getWindow());
+		float speed = 1.f;
+		float sensitivity = 1.f;
+		double lastTime = glfwGetTime();
 		
-		
+		// RENDER LOOP
 		while(!renderer.getShouldClose()) {
 			
-			glfwPollEvents();
-			glClear(GL_COLOR_BUFFER_BIT);
+			double currentTime = glfwGetTime();
+			float deltaTime = (float) (currentTime - lastTime);
+			lastTime = currentTime;
+			float velocity = speed * deltaTime;
 			
+			glfwPollEvents();
+			renderer.clear();
+			
+			// Handle Camera Movements
+			camera.handleMovement(velocity, camera, input, sensitivity);
+		    
 			shader.useShader();
+			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
+            shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
+            shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
+			
 			mesh.renderMesh();
 			
-			 
 			glUseProgram(0);
 			renderer.swapBuffers();
 			
+			if (input.isKeyDown(GLFW_KEY_ESCAPE)) {
+		        glfwSetWindowShouldClose(renderer.getWindow(), true);
+		    }
 		}
 		
 		shader.clearShader();
 		mesh.clearMesh();
+		renderer.destroy();
 	}
 
 }

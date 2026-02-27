@@ -1,15 +1,13 @@
 package com.bora.renderer;
 
-import org.lwjgl.*;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
+import org.joml.Matrix4f;
+import org.lwjgl.system.MemoryStack;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 
-import static org.lwjgl.glfw.Callbacks.*;
-import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
 
@@ -60,7 +58,7 @@ public class Shader {
 		
 		uniformModel = glGetUniformLocation(shaderID,"model");
 		uniformProjection = glGetUniformLocation(shaderID,"projection");
-		// uniformView = glGetUniformLocation(shaderID, "view");
+		uniformView = glGetUniformLocation(shaderID, "view");
 		
 	}
 	
@@ -81,6 +79,14 @@ public class Shader {
         glDeleteShader(theShader);
 	}
 	
+	public void setUniformMat4f(int uniformLocation, Matrix4f matrix) {
+        try(MemoryStack stack = MemoryStack.stackPush()) {
+            FloatBuffer fb = stack.mallocFloat(16);
+            matrix.get(fb);
+            glUniformMatrix4fv(uniformLocation, false, fb);
+        }
+    }
+	
 	public void useShader() {
 		glUseProgram(shaderID);
 	}
@@ -99,7 +105,17 @@ public class Shader {
 		
 	}
 	
+	public int getUniformModel() {
+		return uniformModel;
+	}
 	
+	public int getUniformView() {
+		return uniformView;
+	}
+	
+	public int getUniformProjection() {
+		return uniformProjection;
+	}
 	
 	
 }
