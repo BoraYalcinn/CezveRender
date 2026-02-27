@@ -12,10 +12,11 @@
     <description>Minimal Java 3D renderer using LWJGL</description>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <lwjgl.version>3.3.3</lwjgl.version>
-    </properties>
+    	<maven.compiler.source>17</maven.compiler.source>
+    	<maven.compiler.target>17</maven.compiler.target>
+    	<lwjgl.version>3.3.3</lwjgl.version>
+    	<lwjgl.natives>natives-windows</lwjgl.natives>
+	</properties>
 
     <dependencies>
         <!-- LWJGL Core -->
@@ -31,7 +32,7 @@
             <artifactId>lwjgl-opengl</artifactId>
             <version>${lwjgl.version}</version>
         </dependency>
-
+		
         <!-- LWJGL GLFW -->
         <dependency>
             <groupId>org.lwjgl</groupId>
@@ -44,7 +45,20 @@
     		<artifactId>joml</artifactId>
     		<version>1.10.5</version>
 		</dependency>
-	
+		<!-- STBImage-->
+		<dependency>
+    		<groupId>org.lwjgl</groupId>
+    		<artifactId>lwjgl-stb</artifactId>
+    		<version>${lwjgl.version}</version>
+		</dependency>
+
+		<dependency>
+    		<groupId>org.lwjgl</groupId>
+    		<artifactId>lwjgl-stb</artifactId>
+    		<version>${lwjgl.version}</version>
+   		 	<classifier>${lwjgl.natives}</classifier>
+		</dependency>
+		
         <!-- LWJGL Natives for Windows -->
         <dependency>
             <groupId>org.lwjgl</groupId>
@@ -73,6 +87,7 @@
             <includes>
                 <include>**/*.vert</include>
                 <include>**/*.frag</include>
+                <include>**/*.png</include>
             </includes>
         </resource>
     </resources>

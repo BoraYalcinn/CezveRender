@@ -18,7 +18,7 @@ public class Shader {
 	private int uniformProjection;
 	private int uniformModel;
 	private int uniformView;
-	
+	private int uniformTexture;
 	
 	
 	public Shader() {
@@ -59,7 +59,7 @@ public class Shader {
 		uniformModel = glGetUniformLocation(shaderID,"model");
 		uniformProjection = glGetUniformLocation(shaderID,"projection");
 		uniformView = glGetUniformLocation(shaderID, "view");
-		
+		uniformTexture = glGetUniformLocation(shaderID, "theTexture");
 	}
 	
 	private void addShader(String source,int type) {
@@ -86,6 +86,10 @@ public class Shader {
             glUniformMatrix4fv(uniformLocation, false, fb);
         }
     }
+	
+	public void setTextureUnit(int unit) {
+	    glUniform1i(uniformTexture, unit);
+	}
 	
 	public void useShader() {
 		glUseProgram(shaderID);

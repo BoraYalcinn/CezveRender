@@ -1,6 +1,5 @@
 package com.bora.renderer;
 
-
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
@@ -9,6 +8,7 @@ public class Main {
 	
 	private static Mesh mesh;
 	private static Shader shader;
+	
 	
 		
 	public static void main(String[] args) {
@@ -20,17 +20,28 @@ public class Main {
 		
 		
 		// Mesh Data
-		int[] indices = {0, 1, 2};
+		int[] indices = {
+		        0, 3, 1,
+		        1, 3, 2,
+		        2, 3, 0,
+		        0, 2, 1
+		    };
 		
 		float[] vertices = {
-		    -0.5f, -0.5f, 0.0f,
-		     0.5f, -0.5f, 0.0f,
-		     0.0f,  0.5f, 0.0f
-		};
+				// x,    y,    z,        u ,   v        normal
+		        -1.0f, -1.0f, 0.0f,     0.0f, 0.0f,     0.0f,0.0f,0.0f,
+				 0.0f, -1.0f, 1.0f,     0.5f, 0.0f,     0.0f,0.0f,0.0f,
+				 1.0f, -1.0f, 0.0f,     1.0f, 0.0f,     0.0f,0.0f,0.0f,
+				 0.0f,  1.0f, 0.0f,     0.5f, 1.0f,     0.0f,0.0f,0.0f
+		    };
 		
 		// Create Mesh
 		mesh = new Mesh();
 		mesh.createMesh(vertices, indices);
+		
+		// Create Texture
+		Texture brick = new Texture("textures/brick.png");
+		brick.loadTexture();
 		
 		// Create Camera
 		Camera camera = new Camera(70f, 800f/600f, 0.01f, 100f);
@@ -61,11 +72,16 @@ public class Main {
 			// Handle Camera Movements
 			camera.handleMovement(velocity, camera, input, sensitivity);
 		    
+			// texture & shader
 			shader.useShader();
+			shader.setTextureUnit(0);
+			brick.useTexture();
+			
+			
 			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
             shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
             shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
-			
+            
 			mesh.renderMesh();
 			
 			glUseProgram(0);
@@ -75,6 +91,7 @@ public class Main {
 		        glfwSetWindowShouldClose(renderer.getWindow(), true);
 		    }
 		}
+		
 		
 		shader.clearShader();
 		mesh.clearMesh();
