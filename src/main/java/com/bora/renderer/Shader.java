@@ -91,6 +91,47 @@ public class Shader {
 	    glUniform1i(uniformTexture, unit);
 	}
 	
+	// --- EKLENDİ: DirectionalLight setter ---
+	public void setDirectionalLight(DirectionalLight dLight) {
+	    // Program aktif değilse aktif et
+	    useShader();
+
+	    glUniform3f(glGetUniformLocation(shaderID, "directionalLight.base.color"),
+	                dLight.getColor().x, dLight.getColor().y, dLight.getColor().z);
+	    glUniform1f(glGetUniformLocation(shaderID, "directionalLight.base.ambientIntensity"),
+	                dLight.getAmbientIntensity());
+	    glUniform1f(glGetUniformLocation(shaderID, "directionalLight.base.diffuseIntensity"),
+	                dLight.getDiffuseIntensity());
+	    glUniform3f(glGetUniformLocation(shaderID, "directionalLight.dir"),
+	                dLight.getDirection().x, dLight.getDirection().y, dLight.getDirection().z);
+	}
+
+	// --- EKLENDİ: PointLight array setter ---
+	public void setPointLights(PointLight[] lights) {
+	    useShader();
+
+	    int count = Math.min(lights.length, 10); // MAX_POINT_LIGHTS = 10
+	    glUniform1i(glGetUniformLocation(shaderID, "pointLightCount"), count);
+
+	    for (int i = 0; i < count; i++) {
+	        PointLight p = lights[i];
+	        String prefix = "pointLights[" + i + "].";
+
+	        glUniform3f(glGetUniformLocation(shaderID, prefix + "base.color"),
+	                    p.getColor().x, p.getColor().y, p.getColor().z);
+	        glUniform1f(glGetUniformLocation(shaderID, prefix + "base.ambientIntensity"),
+	                    p.getAmbientIntensity());
+	        glUniform1f(glGetUniformLocation(shaderID, prefix + "base.diffuseIntensity"),
+	                    p.getDiffuseIntensity());
+
+	        glUniform3f(glGetUniformLocation(shaderID, prefix + "position"),
+	                    p.getPosition().x, p.getPosition().y, p.getPosition().z);
+	        glUniform1f(glGetUniformLocation(shaderID, prefix + "constant"), p.getConstant());
+	        glUniform1f(glGetUniformLocation(shaderID, prefix + "linear"), p.getLinear());
+	        glUniform1f(glGetUniformLocation(shaderID, prefix + "exponent"), p.getExponent());
+	    }
+	}
+	
 	public void useShader() {
 		glUseProgram(shaderID);
 	}
@@ -121,5 +162,8 @@ public class Shader {
 		return uniformProjection;
 	}
 	
+	public int getProgramID() {
+	    return shaderID;
+	}
 	
 }

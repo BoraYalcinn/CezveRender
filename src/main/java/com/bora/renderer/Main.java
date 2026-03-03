@@ -28,12 +28,12 @@ public class Main {
 		    };
 		
 		float[] vertices = {
-				// x,    y,    z,        u ,   v        normal
-		        -1.0f, -1.0f, 0.0f,     0.0f, 0.0f,     0.0f,0.0f,0.0f,
-				 0.0f, -1.0f, 1.0f,     0.5f, 0.0f,     0.0f,0.0f,0.0f,
-				 1.0f, -1.0f, 0.0f,     1.0f, 0.0f,     0.0f,0.0f,0.0f,
-				 0.0f,  1.0f, 0.0f,     0.5f, 1.0f,     0.0f,0.0f,0.0f
-		    };
+		        // x,    y,    z,        u ,   v        normal
+		        -1.0f, -1.0f, 0.0f,     0.0f, 0.0f,     0.0f,1.0f,0.0f,
+		         0.0f, -1.0f, 1.0f,     0.5f, 0.0f,     0.0f,1.0f,0.0f,
+		         1.0f, -1.0f, 0.0f,     1.0f, 0.0f,     0.0f,1.0f,0.0f,
+		         0.0f,  1.0f, 0.0f,     0.5f, 1.0f,     0.0f,1.0f,0.0f
+		};
 		
 		// Create Mesh
 		mesh = new Mesh();
@@ -51,6 +51,13 @@ public class Main {
 		
 		// Create Shader
 		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
+		
+		// Create Lights
+		DirectionalLight dirLight = new DirectionalLight(1f, 1f, 1f, 0.2f, 0.8f, -1f, -1f, -1f);
+
+		PointLight[] pointLights = new PointLight[2];
+		pointLights[0] = new PointLight(1f, 1f, 1f, 0.1f, 0.9f, 0f, 1f, 1f, 1f, 0.1f, 0.01f);
+		pointLights[1] = new PointLight(1f, 0f, 0f, 0.1f, 0.7f, 2f, 0f, 1f, 1f, 0.1f, 0.02f);
 		
 		// initialize input
 		Input input = new Input(renderer.getWindow());
@@ -71,11 +78,17 @@ public class Main {
 			
 			// Handle Camera Movements
 			camera.handleMovement(velocity, camera, input, sensitivity);
-		    
+			
 			// texture & shader
 			shader.useShader();
+			
+			// set lights 
+			shader.setDirectionalLight(dirLight);
+			// shader.setPointLights(pointLights);
+			
 			shader.setTextureUnit(0);
 			brick.useTexture();
+			
 			
 			
 			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
