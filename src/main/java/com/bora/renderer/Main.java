@@ -6,16 +6,20 @@ import static org.lwjgl.opengl.GL33C.*;
 
 public class Main {
 	
-	private static Mesh mesh;
+	private static Mesh[]  meshes = new Mesh[2];;
 	private static Shader shader;
-	
 	
 		
 	public static void main(String[] args) {
 		System.out.println("Hello 3D renderer");
 		
+		// Create Materials
+		Material shinyMaterial = new Material(256f, 4.0f);
+		Material dullMaterial  = new Material(8f, 0.3f);
+		
+		
 		// Create Window
-		Window renderer = new Window();
+		Window renderer = new Window(1600,1080);
 		renderer.run();
 		
 		
@@ -35,13 +39,30 @@ public class Main {
 		         0.0f,  1.0f, 0.0f,     0.5f, 1.0f,     0.0f,1.0f,0.0f
 		};
 		
+		float[] fVertices = {
+				 -10.0f, -3.0f, -10.0f,	 	0.0f, 0.0f,     0.0f,1.0f,0.0f,
+	              10.0f, -3.0f, -10.0f, 	 	10.0f, 0.0f,    0.0f,1.0f,0.0f,
+				  10.0f, -3.0f,  10.0f, 	 	10.0f,10.0f,    0.0f,1.0f,0.0f,
+				 -10.0f, -3.0f,  10.0f,  	0.0f,10.0f,     0.0f,1.0f,0.0f
+		};
+		
+		int[] fIndices = {
+				0,1,2,
+				0,2,3
+		};
+		
 		// Create Mesh
-		mesh = new Mesh();
-		mesh.createMesh(vertices, indices);
+		meshes[0] = new Mesh();
+		meshes[0].createMesh(vertices, indices);
+		// Create Floor Mesh
+		meshes[1] = new Mesh();
+		meshes[1].createMesh(fVertices, fIndices);
 		
 		// Create Texture
 		Texture brick = new Texture("textures/brick.png");
 		brick.loadTexture();
+		Texture plain = new Texture("textures/plain.png");
+		plain.loadTexture();
 		
 		// Create Camera
 		Camera camera = new Camera(70f, 800f/600f, 0.01f, 100f);
@@ -53,11 +74,39 @@ public class Main {
 		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
 		
 		// Create Lights
-		DirectionalLight dirLight = new DirectionalLight(1f, 1f, 1f, 0.2f, 0.8f, -1f, -1f, -1f);
+		DirectionalLight dirLight = new DirectionalLight(1f, 0f, 0f, 0.1f, 0.8f, -1f, -1f, -1f);
 
 		PointLight[] pointLights = new PointLight[2];
-		pointLights[0] = new PointLight(1f, 1f, 1f, 0.1f, 0.9f, 0f, 1f, 1f, 1f, 0.1f, 0.01f);
-		pointLights[1] = new PointLight(1f, 0f, 0f, 0.1f, 0.7f, 2f, 0f, 1f, 1f, 0.1f, 0.02f);
+		pointLights[0] = new PointLight(0f, 0f, 1f,
+										0.5f, 0.9f,
+										4.0f, 0f, 0f,
+										0.3f, 0.2f, 0.1f);
+		
+		pointLights[1] = new PointLight(0f, 1f, 0f,
+										0.6f, 1f, 
+										-4.f, 2.0f, 0f, 
+										0.3f, 0.1f, 0.1f);
+		
+		SpotLight[] spotLights = new SpotLight[2];
+
+		spotLights[0] = new SpotLight(
+		        0f, 0f, 1f,        
+		        0.0f, 2.0f,        
+		        0f, 8f, 2f,        
+		        0f, -1f, 0f,       
+		        0.3f, 0.1f, 0.1f,  
+		        20f                
+		);
+
+		spotLights[1] = new SpotLight(
+		        1f, 0f, 0f,        
+		        0.0f, 2.0f,
+		        -2f, 8f, 0f,
+		        0f, -1f, 0f,
+		        0.3f, 0.1f, 0.1f,
+		        20f
+		);
+		
 		
 		// initialize input
 		Input input = new Input(renderer.getWindow());
@@ -83,19 +132,42 @@ public class Main {
 			shader.useShader();
 			
 			// set lights 
-			shader.setDirectionalLight(dirLight);
+			// shader.setDirectionalLight(dirLight);
 			// shader.setPointLights(pointLights);
+			shader.setSpotLights(spotLights);
 			
-			shader.setTextureUnit(0);
-			brick.useTexture();
+			// view position
+			glUniform3f(glGetUniformLocation(shader.getProgramID(), "viewPos"),
+				    camera.getTransform().position.x,
+				    camera.getTransform().position.y,
+				    camera.getTransform().position.z);
 			
 			
-			
+			// matrices
 			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
             shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
             shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
             
-			mesh.renderMesh();
+            // Triangle
+            brick.useTexture();
+
+            dullMaterial.useMaterial(
+            		shader.getUniformSpecularIntensity(),   
+            		shader.getUniformShininess()
+            		);
+
+            meshes[0].renderMesh();
+
+            // 	floor
+            plain.useTexture();
+
+            shinyMaterial.useMaterial(               
+            		shader.getUniformSpecularIntensity(),
+            		shader.getUniformShininess()
+            		);
+
+            meshes[1].renderMesh();
+            
 			
 			glUseProgram(0);
 			renderer.swapBuffers();
@@ -105,9 +177,10 @@ public class Main {
 		    }
 		}
 		
-		
+		// clear
 		shader.clearShader();
-		mesh.clearMesh();
+		meshes[0].clearMesh();
+		meshes[1].clearMesh();
 		renderer.destroy();
 	}
 

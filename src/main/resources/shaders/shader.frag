@@ -7,6 +7,7 @@ in vec3 fragNormal;
 out vec4 FragColor;
 
 #define MAX_POINT_LIGHTS 10
+#define MAX_SPOT_LIGHTS 10
 
 struct Material {
 	float specularIntensity;
@@ -34,6 +35,13 @@ struct PointLight {
 	float exponent;
 };
 
+struct SpotLight {
+	PointLight base;
+	vec3 direction;
+	float edge;
+	
+};
+
 uniform sampler2D theTexture;
 uniform Material material;
 
@@ -42,6 +50,9 @@ uniform DirectionalLight directionalLight;
 
 uniform int pointLightCount;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
+
+uniform int spotLightCount;
+uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform vec3 viewPos;
 
@@ -86,6 +97,41 @@ vec3 CalcPointLight(PointLight pLight, vec3 normal, vec3 fragPos)
     return ambient + diffuse + specular;
 }
 
+vec3 CalcSpotLight(SpotLight sLight,vec3 normal, vec3 fragPos){
+
+	vec3 lightDir = normalize(sLight.base.position - fragPos);
+    vec3 viewDir  = normalize(viewPos - fragPos);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+
+	float diff = max(dot(normal, lightDir), 0.0);
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), material.shininess);
+
+    float distance = length(sLight.base.position - fragPos);
+    float attenuation = 1.0 / (sLight.base.constant +
+                               sLight.base.linear * distance +
+                               sLight.base.exponent * distance * distance);
+
+    float theta = dot(lightDir, normalize(-sLight.direction));
+
+    if(theta > sLight.edge)
+    {
+        vec3 ambient  = sLight.base.base.color * sLight.base.base.ambientIntensity;
+        vec3 diffuse  = sLight.base.base.color * sLight.base.base.diffuseIntensity * diff;
+        vec3 specular = sLight.base.base.color * material.specularIntensity * spec;
+
+        ambient  *= attenuation;
+        diffuse  *= attenuation;
+        specular *= attenuation;
+
+        return ambient + diffuse + specular;
+    }
+    else
+    {
+        return vec3(0.0);
+    }
+	
+};
+
 void main(){
 	
 	vec3 norm = normalize(fragNormal);
@@ -99,7 +145,10 @@ void main(){
 		result += CalcPointLight(pointLights[i],norm,fragPos);
 	}
 	
-	//Spot Light // TODO
+	//Spot Light 
+	for(int i= 0;i< spotLightCount;i++){
+		result += CalcSpotLight(spotLights[i],norm,fragPos);
+	}
 	
 	
 	vec3 textureColor = texture(theTexture,fragTex).rgb;

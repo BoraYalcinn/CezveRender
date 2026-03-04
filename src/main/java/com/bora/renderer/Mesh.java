@@ -20,7 +20,6 @@ public class Mesh {
 		
 	}
 	
-	
 	public void createMesh(float vertices[],int indices[]) {
 		
 		this.indexCount = indices.length;

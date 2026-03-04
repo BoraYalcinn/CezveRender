@@ -21,6 +21,10 @@ public class Shader {
 	private int uniformTexture;
 	
 	
+	private int uniformSpecularIntensity;
+	private int uniformShininess;
+	
+	
 	public Shader() {
 		shaderID = 0;
 		uniformProjection = 0;
@@ -36,6 +40,8 @@ public class Shader {
 		
 		
 		compileShader(vertexResource,fragmentResource);
+		uniformSpecularIntensity = glGetUniformLocation(shaderID, "material.specularIntensity");
+		uniformShininess = glGetUniformLocation(shaderID, "material.shininess");
 		
 		
 	}
@@ -91,9 +97,9 @@ public class Shader {
 	    glUniform1i(uniformTexture, unit);
 	}
 	
-	// --- EKLENDİ: DirectionalLight setter ---
+	// set the directional lights
 	public void setDirectionalLight(DirectionalLight dLight) {
-	    // Program aktif değilse aktif et
+	    
 	    useShader();
 
 	    glUniform3f(glGetUniformLocation(shaderID, "directionalLight.base.color"),
@@ -106,7 +112,7 @@ public class Shader {
 	                dLight.getDirection().x, dLight.getDirection().y, dLight.getDirection().z);
 	}
 
-	// --- EKLENDİ: PointLight array setter ---
+	// set the point lights
 	public void setPointLights(PointLight[] lights) {
 	    useShader();
 
@@ -132,6 +138,37 @@ public class Shader {
 	    }
 	}
 	
+	// set the spot lights
+	public void setSpotLights(SpotLight[] spotLights) {
+		useShader();
+		
+		int count = Math.min(spotLights.length,10); // MAX_SPOT_LIGHTS = 10
+		glUniform1i(glGetUniformLocation(shaderID,"spotLightCount"),count);
+		
+		for(int i = 0; i < count;i++) {
+			SpotLight s = spotLights[i];
+			String prefix = "spotLights["+i+"].";
+			
+			glUniform3f(glGetUniformLocation(shaderID,prefix+"base.base.color"),
+						s.getColor().x,s.getColor().y,s.getColor().z);
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "base.base.ambientIntensity"),
+                    	s.getAmbientIntensity());
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "base.base.diffuseIntensity"),
+                    	s.getDiffuseIntensity());
+			
+			glUniform3f(glGetUniformLocation(shaderID, prefix + "base.position"),
+                    	s.getPosition().x, s.getPosition().y, s.getPosition().z);
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "base.constant"), s.getConstant());
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "base.linear"), s.getLinear());
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "base.exponent"), s.getExponent());
+			
+			glUniform3f(glGetUniformLocation(shaderID,prefix + "direction"),
+							s.direction.x,s.direction.y,s.direction.z);
+			
+			glUniform1f(glGetUniformLocation(shaderID,prefix+ "edge"),s.procEdge);
+		}
+	}
+	
 	public void useShader() {
 		glUseProgram(shaderID);
 	}
@@ -149,6 +186,15 @@ public class Shader {
 		}
 		
 	}
+	
+	public int getUniformSpecularIntensity() {
+	    return uniformSpecularIntensity;
+	}
+
+	public int getUniformShininess() {
+	    return uniformShininess;
+	}
+	
 	
 	public int getUniformModel() {
 		return uniformModel;
