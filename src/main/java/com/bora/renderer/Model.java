@@ -14,20 +14,28 @@ import java.util.List;
 public class Model {
 
 	private String fileLocation;
+	private String modelDir;
 	private List<Mesh> meshes = new ArrayList<>();
+	private List<Texture> textures = new ArrayList<>();
+	private Transform transform = new Transform();
 	
 	public Model(String filePath) {
 		this.fileLocation = filePath;
-		LoadModel();
-		
+		int lastSlash = filePath.lastIndexOf('/');
+	    this.modelDir = (lastSlash >= 0) ? filePath.substring(0, lastSlash + 1) : "";
+	    LoadModel();		
 	}
 	
-	public void Draw() {
-		for(Mesh mesh : meshes) {
-			mesh.renderMesh();
-		}
-		
+	public void Draw(Shader shader) {
+	    shader.setUniformMat4f(shader.getUniformModel(), transform.getModelMatrix());
+	    for(int i = 0; i < meshes.size(); i++) {
+	        if(i < textures.size() && textures.get(i) != null) {
+	            textures.get(i).useTexture();
+	        }
+	        meshes.get(i).renderMesh();
+	    }
 	}
+	
 	
 	private void LoadModel() {
 	    InputStream in = getClass().getClassLoader().getResourceAsStream(fileLocation);
@@ -42,8 +50,9 @@ public class Model {
 	                buffer,
 	                Assimp.aiProcess_Triangulate |
 	                Assimp.aiProcess_FlipUVs |
-	                Assimp.aiProcess_CalcTangentSpace,
-	                fileLocation
+	                Assimp.aiProcess_CalcTangentSpace |
+	                Assimp.aiProcess_GenNormals,
+	                "obj"
 	        );
 
 	        if (scene == null || scene.mRootNode() == null) {
@@ -76,38 +85,105 @@ public class Model {
 	}
 	
 	private Mesh processMesh(AIMesh mesh, AIScene scene) {
+	    int numVertices = mesh.mNumVertices();
 
-	    AIVector3D.Buffer vertices = mesh.mVertices();
-	    AIFace.Buffer faces = mesh.mFaces();
+	    AIVector3D.Buffer positions = mesh.mVertices();
+	    AIVector3D.Buffer normals   = mesh.mNormals();
+	    AIVector3D.Buffer uvs       = mesh.mTextureCoords(0);
+	    AIFace.Buffer     faces     = mesh.mFaces();
 
-	    float[] vertexArray = new float[mesh.mNumVertices() * 3];
+	    boolean hasUV   = uvs != null;
+	    boolean hasNorm = normals != null;
 
-	    for(int i = 0; i < mesh.mNumVertices(); i++) {
+	    
+	    float[] vertexArray = new float[numVertices * 8];
 
-	        AIVector3D vertex = vertices.get(i);
-	        float scale = 1.f;
+	    for (int i = 0; i < numVertices; i++) {
+	        AIVector3D pos = positions.get(i);
+	        vertexArray[i*8]   = pos.x();
+	        vertexArray[i*8+1] = pos.y();
+	        vertexArray[i*8+2] = pos.z();
 
-	        vertexArray[i*3] = vertex.x() * scale;
-	        vertexArray[i*3+1] = vertex.y() * scale;
-	        vertexArray[i*3+2] = vertex.z() * scale; 
+	        if (hasUV) {
+	            AIVector3D uv = uvs.get(i);
+	            vertexArray[i*8+3] = uv.x();
+	            vertexArray[i*8+4] = uv.y();
+	        } else {
+	            vertexArray[i*8+3] = 0f;
+	            vertexArray[i*8+4] = 0f;
+	        }
+
+	        if (hasNorm) {
+	            AIVector3D n = normals.get(i);
+	            vertexArray[i*8+5] = n.x();
+	            vertexArray[i*8+6] = n.y();
+	            vertexArray[i*8+7] = n.z();
+	        } else {
+	            vertexArray[i*8+5] = 0f;
+	            vertexArray[i*8+6] = 1f;
+	            vertexArray[i*8+7] = 0f;
+	        }
 	    }
 
 	    int[] indices = new int[mesh.mNumFaces() * 3];
-
-	    for(int i = 0; i < mesh.mNumFaces(); i++) {
-
+	    for (int i = 0; i < mesh.mNumFaces(); i++) {
 	        AIFace face = faces.get(i);
-	        IntBuffer indexBuffer = face.mIndices();
-
-	        indices[i*3] = indexBuffer.get(0);
-	        indices[i*3+1] = indexBuffer.get(1);
-	        indices[i*3+2] = indexBuffer.get(2);
+	        IntBuffer ib = face.mIndices();
+	        indices[i*3]   = ib.get(0);
+	        indices[i*3+1] = ib.get(1);
+	        indices[i*3+2] = ib.get(2);
 	    }
+
+	    Texture texture = loadMeshTexture(mesh, scene);
+	    textures.add(texture);
 
 	    Mesh newMesh = new Mesh();
 	    newMesh.createMesh(vertexArray, indices);
-
 	    return newMesh;
 	}
 	
+	private Texture loadMeshTexture(AIMesh mesh, AIScene scene) {
+	    
+	    
+	    int matIndex = mesh.mMaterialIndex();
+	    if (matIndex < 0 || scene.mMaterials() == null) return null;
+
+	    
+	    AIMaterial material = AIMaterial.create(scene.mMaterials().get(matIndex));
+
+	    
+	    AIString path = AIString.calloc();
+	    int result = Assimp.aiGetMaterialTexture(
+	            material,
+	            Assimp.aiTextureType_DIFFUSE, 
+	            0,                            
+	            path,
+	            (IntBuffer) null, null, null, null, null, null
+	    );
+
+	    
+	    if (result != 0) return null;
+
+	    String texPath = path.dataString();
+	    if (texPath == null || texPath.isEmpty()) return null;
+
+	   
+	    String fileName = texPath.replace("\\", "/");
+	    if (fileName.contains("/")) {
+	        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+	    }
+
+	    
+	    String fullPath = modelDir + fileName;
+	    System.out.println("Texture yükleniyor: " + fullPath);
+
+	    
+	    Texture texture = new Texture(fullPath);
+	    texture.loadTexture();
+	    return texture;
+	}
+	
+	public Transform getTransform() {
+		return transform;
+	}
 }

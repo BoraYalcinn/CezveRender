@@ -87,8 +87,9 @@ public class Shader {
 	
 	public void setUniformMat4f(int uniformLocation, Matrix4f matrix) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer fb = stack.mallocFloat(16);
+            FloatBuffer fb = stack.mallocFloat(16);	
             matrix.get(fb);
+            
             glUniformMatrix4fv(uniformLocation, false, fb);
         }
     }

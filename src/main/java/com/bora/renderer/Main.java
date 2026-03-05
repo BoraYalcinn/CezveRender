@@ -65,13 +65,14 @@ public class Main {
 		plain.loadTexture();
 		
 		// Create Model
-		Model human = new Model("models/human.obj");
+		Model xwing = new Model("models/xwing.obj");
+		xwing.getTransform().position.set(0f, -2.f, 0f);
+		
 		
 		// Create Camera
 		Camera camera = new Camera(70f, 800f/600f, 0.01f, 100f);
         camera.getTransform().position.z = 2f;
         
-        Transform modelTransform = new Transform();
 		
 		// Create Shader
 		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
@@ -147,31 +148,31 @@ public class Main {
 			
 			
 			// matrices
-			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
+			
             shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
             shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
             
             // Draw Models
-            human.Draw();
             
-            // Triangle
+            xwing.Draw(shader);
+            
+            
+         // Triangle
+            shader.setUniformMat4f(shader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
             brick.useTexture();
-
             dullMaterial.useMaterial(
-            		shader.getUniformSpecularIntensity(),   
-            		shader.getUniformShininess()
-            		);
-
+                    shader.getUniformSpecularIntensity(),   
+                    shader.getUniformShininess()
+                    );
             meshes[0].renderMesh();
 
-            // 	floor
+            // floor
+            shader.setUniformMat4f(shader.getUniformModel(), meshes[1].getTransform().getModelMatrix());
             plain.useTexture();
-
             shinyMaterial.useMaterial(               
-            		shader.getUniformSpecularIntensity(),
-            		shader.getUniformShininess()
-            		);
-
+                    shader.getUniformSpecularIntensity(),
+                    shader.getUniformShininess()
+                    );
             meshes[1].renderMesh();
             
 			
