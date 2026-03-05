@@ -78,6 +78,18 @@
             <version>${lwjgl.version}</version>
             <classifier>natives-windows</classifier>
         </dependency>
+        <!-- LWJGL Assimp -->
+		<dependency>
+		    <groupId>org.lwjgl</groupId>
+		    <artifactId>lwjgl-assimp</artifactId>
+		    <version>${lwjgl.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.lwjgl</groupId>
+		    <artifactId>lwjgl-assimp</artifactId>
+		    <version>${lwjgl.version}</version>
+		    <classifier>${lwjgl.natives}</classifier>
+		</dependency>
     </dependencies>
 
     <build>
@@ -88,6 +100,11 @@
                 <include>**/*.vert</include>
                 <include>**/*.frag</include>
                 <include>**/*.png</include>
+                <include>**/*.obj</include>
+	            <include>**/*.fbx</include>
+	            <include>**/*.FBX</include>
+	            <include>**/*.gltf</include>
+	            <include>**/*.glb</include>
             </includes>
         </resource>
     </resources>

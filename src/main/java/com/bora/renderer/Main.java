@@ -64,6 +64,9 @@ public class Main {
 		Texture plain = new Texture("textures/plain.png");
 		plain.loadTexture();
 		
+		// Create Model
+		Model human = new Model("models/human.obj");
+		
 		// Create Camera
 		Camera camera = new Camera(70f, 800f/600f, 0.01f, 100f);
         camera.getTransform().position.z = 2f;
@@ -133,7 +136,7 @@ public class Main {
 			
 			// set lights 
 			// shader.setDirectionalLight(dirLight);
-			// shader.setPointLights(pointLights);
+			shader.setPointLights(pointLights);
 			shader.setSpotLights(spotLights);
 			
 			// view position
@@ -147,6 +150,9 @@ public class Main {
 			shader.setUniformMat4f(shader.getUniformModel(), modelTransform.getModelMatrix());
             shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
             shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
+            
+            // Draw Models
+            human.Draw();
             
             // Triangle
             brick.useTexture();

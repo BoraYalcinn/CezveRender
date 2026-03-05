@@ -9,6 +9,10 @@ public class Mesh {
 	public int IBO;
 	public int indexCount;
 	
+	float[] vertices;
+	int[] indices;
+	
+	
 	private Transform transform = new Transform();
 	
 	public Mesh() {
@@ -17,11 +21,13 @@ public class Mesh {
 		this.VAO = 0;
 		this.IBO = 0;
 		this.indexCount = 0;
-		
+	
 	}
 	
 	public void createMesh(float vertices[],int indices[]) {
 		
+		this.vertices = vertices;
+		this.indices = indices;
 		this.indexCount = indices.length;
 		
 		this.VAO =  glGenVertexArrays();

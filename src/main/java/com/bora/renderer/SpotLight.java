@@ -3,8 +3,6 @@ package com.bora.renderer;
 import org.joml.*;
 import org.joml.Math;
 
-import static org.lwjgl.opengl.GL20C.glUniform1f;
-import static org.lwjgl.opengl.GL20C.glUniform3f;
 import static org.lwjgl.opengl.GL33C.*;
 
 public class SpotLight extends PointLight{
