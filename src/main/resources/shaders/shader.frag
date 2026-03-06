@@ -48,6 +48,7 @@ uniform Material material;
 
 uniform sampler2D shadowMap;
 uniform mat4 lightSpaceMatrix;
+uniform float shadowBiasMultiplier;
 
 uniform DirectionalLight directionalLight;
 
@@ -58,6 +59,7 @@ uniform int spotLightCount;
 uniform SpotLight spotLights[MAX_SPOT_LIGHTS];
 
 uniform vec3 viewPos;
+uniform int debugMode;
 
 vec3 CalcDirectionalLight(DirectionalLight dLight, vec3 normal, vec3 fragPos)
 {
@@ -135,15 +137,30 @@ vec3 CalcSpotLight(SpotLight sLight,vec3 normal, vec3 fragPos){
 	
 };
 
-float CalcShadow(vec4 fragPosLightSpace){
+float CalcShadow(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir){
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 	projCoords = projCoords * 0.5 + 0.5;
-	
-	float closestDepth = texture(shadowMap, projCoords.xy).r; // I am using .r since there is only one channel 
+
+	// Fragments beyond the light's far plane should NOT be in shadow
+	if(projCoords.z > 1.0)
+		return 0.0;
+
 	float currentDepth = projCoords.z;
-	
-	float bias = 0.05;
-	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+	// Slope-based bias to reduce shadow acne without excessive peter-panning
+	float biasBase = shadowBiasMultiplier;
+	float bias = biasBase * (1.0 - dot(normal, lightDir));
+
+	// PCF (Percentage Closer Filtering) for softer shadow edges
+	float shadow = 0.0;
+	vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+	for(int x = -1; x <= 1; x++){
+		for(int y = -1; y <= 1; y++){
+			float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+			shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
+		}
+	}
+	shadow /= 9.0;
 
 	return shadow;
 }
@@ -153,7 +170,8 @@ void main(){
 	
 	vec3 norm = normalize(fragNormal);
 	vec3 result = vec3(0.);
-	float shadow = CalcShadow(fragPosLightSpace);
+	vec3 lightDir = normalize(-directionalLight.dir);
+	float shadow = CalcShadow(fragPosLightSpace, norm, lightDir);
 
 	
 	//Directional Light
@@ -173,6 +191,16 @@ void main(){
 	
 	
 	vec3 textureColor = texture(theTexture,fragTex).rgb;
+
+	// Debug mode: visualize shadow value directly
+	if (debugMode == 1) {
+		// Green = fully lit (shadow=0), Red = fully shadowed (shadow=1)
+		// Also show projCoords.xy as blue channel to verify projection
+		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+		projCoords = projCoords * 0.5 + 0.5;
+		FragColor = vec4(shadow, 1.0 - shadow, projCoords.z, 1.0);
+		return;
+	}
 
 	FragColor = vec4(result * textureColor,1.0);
 
