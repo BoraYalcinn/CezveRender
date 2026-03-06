@@ -58,15 +58,20 @@ public class Main {
 		meshes[1] = new Mesh();
 		meshes[1].createMesh(fVertices, fIndices);
 		
+		
+
+		// Create Model
+		Model xwing = new Model("models/xwing.obj");
+		xwing.getTransform().position.set(0f, -2.f, 0f);
+		
 		// Create Texture
 		Texture brick = new Texture("textures/brick.png");
 		brick.loadTexture();
 		Texture plain = new Texture("textures/plain.png");
 		plain.loadTexture();
+		Texture grass = new Texture("textures/grass.jpg");
+		grass.loadTexture();
 		
-		// Create Model
-		Model xwing = new Model("models/xwing.obj");
-		xwing.getTransform().position.set(0f, -2.f, 0f);
 		
 		
 		// Create Camera
@@ -157,7 +162,7 @@ public class Main {
             xwing.Draw(shader);
             
             
-         // Triangle
+            // Triangle
             shader.setUniformMat4f(shader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
             brick.useTexture();
             dullMaterial.useMaterial(
@@ -168,7 +173,7 @@ public class Main {
 
             // floor
             shader.setUniformMat4f(shader.getUniformModel(), meshes[1].getTransform().getModelMatrix());
-            plain.useTexture();
+            grass.useTexture();
             shinyMaterial.useMaterial(               
                     shader.getUniformSpecularIntensity(),
                     shader.getUniformShininess()
@@ -177,7 +182,9 @@ public class Main {
             
 			
 			glUseProgram(0);
+			
 			renderer.swapBuffers();
+			renderer.clear();
 			
 			if (input.isKeyDown(GLFW_KEY_ESCAPE)) {
 		        glfwSetWindowShouldClose(renderer.getWindow(), true);

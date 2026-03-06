@@ -100,11 +100,13 @@
                 <include>**/*.vert</include>
                 <include>**/*.frag</include>
                 <include>**/*.png</include>
+                <include>**/*.jpg</include>
                 <include>**/*.obj</include>
 	            <include>**/*.fbx</include>
 	            <include>**/*.FBX</include>
 	            <include>**/*.gltf</include>
 	            <include>**/*.glb</include>
+	            <include>**/*.mtl</include>
             </includes>
         </resource>
     </resources>

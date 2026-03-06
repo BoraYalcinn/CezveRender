@@ -11,7 +11,7 @@ public class Transform {
     private Matrix4f modelMatrix = new Matrix4f();
 
     public Matrix4f getModelMatrix() {
-    	System.out.println("getModelMatrix position: " + position.x + ", " + position.y + ", " + position.z);
+    	// System.out.println("getModelMatrix position: " + position.x + ", " + position.y + ", " + position.z);
         modelMatrix.identity()
             .translate(position)
             .rotateX((float)Math.toRadians(rotation.x))

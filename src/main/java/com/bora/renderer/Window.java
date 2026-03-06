@@ -69,6 +69,7 @@ public class Window {
 	    glfwShowWindow(mainWindow);
 	    
 	    glEnable(GL_DEPTH_TEST);
+	    glDepthFunc(GL_LESS);
 	}
 	
 	public void clear() {

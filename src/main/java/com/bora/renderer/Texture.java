@@ -33,6 +33,7 @@ public class Texture {
 	public void useTexture() {
 	    glActiveTexture(GL_TEXTURE0);
 	    glBindTexture(GL_TEXTURE_2D, textureID);
+	    
 	        
 	}
 	

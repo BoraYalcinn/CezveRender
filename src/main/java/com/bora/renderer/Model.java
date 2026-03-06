@@ -7,17 +7,22 @@ import org.lwjgl.system.MemoryUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
+import static org.lwjgl.opengl.GL33C.*;
 
 public class Model {
 
 	private String fileLocation;
 	private String modelDir;
+	
 	private List<Mesh> meshes = new ArrayList<>();
 	private List<Texture> textures = new ArrayList<>();
+	private Map<String,String> materialTextures = new HashMap<>();
+	
 	private Transform transform = new Transform();
+	
+	
 	
 	public Model(String filePath) {
 		this.fileLocation = filePath;
@@ -27,6 +32,7 @@ public class Model {
 	}
 	
 	public void Draw(Shader shader) {
+		glBindTexture(GL_TEXTURE_2D,0);
 	    shader.setUniformMat4f(shader.getUniformModel(), transform.getModelMatrix());
 	    for(int i = 0; i < meshes.size(); i++) {
 	        if(i < textures.size() && textures.get(i) != null) {
@@ -58,11 +64,39 @@ public class Model {
 	        if (scene == null || scene.mRootNode() == null) {
 	            throw new RuntimeException("Error Loading Model: " + Assimp.aiGetErrorString());
 	        }
-
+	        
+	        String mtlPath = fileLocation.replace(".obj", ".mtl");
+	        parseMTL(mtlPath);
 	        processNode(scene.mRootNode(), scene);
 
 	        MemoryUtil.memFree(buffer);
 
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	private void parseMTL(String mtlPath) {
+		InputStream in = getClass().getClassLoader().getResourceAsStream(mtlPath);
+		if (in == null) {
+		    in = getClass().getResourceAsStream("/" + mtlPath);
+		}
+	    try {
+	        String currentMaterial = null;
+	        for (String line : new String(in.readAllBytes()).split("\n")) {
+	            line = line.trim();
+	            if (line.startsWith("newmtl ")) {
+	                currentMaterial = line.substring(7).trim();
+	            } else if (line.startsWith("map_Kd ") && currentMaterial != null) {
+	                String texFile = line.substring(7).trim();
+	                
+	                texFile = texFile.replace("\\", "/");
+	                if (texFile.contains("/")) {
+	                    texFile = texFile.substring(texFile.lastIndexOf('/') + 1);
+	                }
+	                materialTextures.put(currentMaterial, texFile);
+	            }
+	        }
 	    } catch (IOException e) {
 	        e.printStackTrace();
 	    }
@@ -150,34 +184,24 @@ public class Model {
 
 	    
 	    AIMaterial material = AIMaterial.create(scene.mMaterials().get(matIndex));
-
+	    AIString matName = AIString.calloc();
+	    Assimp.aiGetMaterialString(material, Assimp.AI_MATKEY_NAME, 0, 0, matName);
+	    String name = matName.dataString();
 	    
-	    AIString path = AIString.calloc();
-	    int result = Assimp.aiGetMaterialTexture(
-	            material,
-	            Assimp.aiTextureType_DIFFUSE, 
-	            0,                            
-	            path,
-	            (IntBuffer) null, null, null, null, null, null
-	    );
-
-	    
-	    if (result != 0) return null;
-
-	    String texPath = path.dataString();
-	    if (texPath == null || texPath.isEmpty()) return null;
-
-	   
-	    String fileName = texPath.replace("\\", "/");
-	    if (fileName.contains("/")) {
-	        fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+	    String fileName = materialTextures.get(name);
+	    if (fileName == null) {
+	        System.out.println("Texture cannot be found: " + name);
+	        return null;
 	    }
 
 	    
-	    String fullPath = modelDir + fileName;
-	    System.out.println("Texture yükleniyor: " + fullPath);
+	    String modelName = fileLocation
+	        .substring(fileLocation.lastIndexOf('/') + 1)
+	        .replace(".obj", "");
 
-	    
+	    String fullPath = "textures/" + modelName + "/" + fileName;
+	    System.out.println("Texture downloading: " + fullPath);
+
 	    Texture texture = new Texture(fullPath);
 	    texture.loadTexture();
 	    return texture;
