@@ -7,7 +7,7 @@ import static org.lwjgl.opengl.GL33C.*;
 public class Main {
 	
 	private static Mesh[]  meshes = new Mesh[2];;
-	private static Shader shader;
+	
 	
 		
 	public static void main(String[] args) {
@@ -80,10 +80,13 @@ public class Main {
         
 		
 		// Create Shader
-		shader = new Shader("shaders/shader.vert","shaders/shader.frag");
+		Shader shader = new Shader("shaders/shader.vert","shaders/shader.frag");
+		Shader shadowShader = new Shader("shaders/shadow.vert", "shaders/shadow.frag");
+		
+		
 		
 		// Create Lights
-		DirectionalLight dirLight = new DirectionalLight(1f, 0f, 0f, 0.1f, 0.8f, -1f, -1f, -1f);
+		DirectionalLight dirLight = new DirectionalLight(1f, 1f, 1f, 0.1f, 0.8f, 0f, -1f, -0.5f);
 
 		PointLight[] pointLights = new PointLight[2];
 		pointLights[0] = new PointLight(0f, 0f, 1f,
@@ -131,19 +134,49 @@ public class Main {
 			lastTime = currentTime;
 			float velocity = speed * deltaTime;
 			
+			
+			
+			// ─── SHADOW PASS ───────────────────────────────────────────
+			glBindFramebuffer(GL_FRAMEBUFFER, dirLight.getShadowMap().getDepthMapFBO());
+			glViewport(0, 0, 1024, 1024);
+			glClear(GL_DEPTH_BUFFER_BIT);
+
+			shadowShader.useShader();
+			shadowShader.setUniformMat4f(shadowShader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
+
+			shadowShader.setUniformMat4f(shadowShader.getUniformModel(), xwing.getTransform().getModelMatrix());
+			xwing.Draw(shadowShader);
+
+			shadowShader.setUniformMat4f(shadowShader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
+			meshes[0].renderMesh();
+
+			shadowShader.setUniformMat4f(shadowShader.getUniformModel(), meshes[1].getTransform().getModelMatrix());
+			meshes[1].renderMesh();
+
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, 1600, 1080);
+			// ─── SHADOW PASS BİTTİ ─────────────────────────────────────
+			
 			glfwPollEvents();
 			renderer.clear();
 			
 			// Handle Camera Movements
 			camera.handleMovement(velocity, camera, input, sensitivity);
 			
-			// texture & shader
 			shader.useShader();
+
+			// shadow map'i bind et
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, dirLight.getShadowMap().getDepthMap());
+			glUniform1i(glGetUniformLocation(shader.getProgramID(), "shadowMap"), 1);
+			shader.setUniformMat4f(shader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
+
+			shader.setDirectionalLight(dirLight);
 			
 			// set lights 
-			// shader.setDirectionalLight(dirLight);
-			shader.setPointLights(pointLights);
-			shader.setSpotLights(spotLights);
+			shader.setDirectionalLight(dirLight);
+			// shader.setPointLights(pointLights);
+			// shader.setSpotLights(spotLights);
 			
 			// view position
 			glUniform3f(glGetUniformLocation(shader.getProgramID(), "viewPos"),

@@ -3,6 +3,7 @@
 in vec2 fragTex;
 in vec3 fragPos;
 in vec3 fragNormal;
+in vec4 fragPosLightSpace;
 
 out vec4 FragColor;
 
@@ -45,6 +46,8 @@ struct SpotLight {
 uniform sampler2D theTexture;
 uniform Material material;
 
+uniform sampler2D shadowMap;
+uniform mat4 lightSpaceMatrix;
 
 uniform DirectionalLight directionalLight;
 
@@ -132,13 +135,31 @@ vec3 CalcSpotLight(SpotLight sLight,vec3 normal, vec3 fragPos){
 	
 };
 
+float CalcShadow(vec4 fragPosLightSpace){
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	projCoords = projCoords * 0.5 + 0.5;
+	
+	float closestDepth = texture(shadowMap, projCoords.xy).r; // I am using .r since there is only one channel 
+	float currentDepth = projCoords.z;
+	
+	float bias = 0.05;
+	float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+
+	return shadow;
+}
+
+
 void main(){
 	
 	vec3 norm = normalize(fragNormal);
 	vec3 result = vec3(0.);
+	float shadow = CalcShadow(fragPosLightSpace);
+
 	
 	//Directional Light
-	result += CalcDirectionalLight(directionalLight, norm, fragPos);
+	vec3 ambient = directionalLight.base.color * directionalLight.base.ambientIntensity;
+	vec3 lighting = CalcDirectionalLight(directionalLight, norm, fragPos);
+	result += ambient + (lighting - ambient) * (1.0 - shadow);
 	
 	//Point Light
 	for(int i = 0; i<pointLightCount;i++){

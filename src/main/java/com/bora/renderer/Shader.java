@@ -19,6 +19,7 @@ public class Shader {
 	private int uniformModel;
 	private int uniformView;
 	private int uniformTexture;
+	private int uniformLightSpaceMatrix;
 	
 	
 	private int uniformSpecularIntensity;
@@ -66,6 +67,7 @@ public class Shader {
 		uniformProjection = glGetUniformLocation(shaderID,"projection");
 		uniformView = glGetUniformLocation(shaderID, "view");
 		uniformTexture = glGetUniformLocation(shaderID, "theTexture");
+		uniformLightSpaceMatrix = glGetUniformLocation(shaderID,"lightSpaceMatrix");
 	}
 	
 	private void addShader(String source,int type) {
@@ -187,6 +189,11 @@ public class Shader {
 		}
 		
 	}
+	
+	public int getUniformLightSpaceMatrix() {
+	    return uniformLightSpaceMatrix;
+	}
+	
 	
 	public int getUniformSpecularIntensity() {
 	    return uniformSpecularIntensity;
