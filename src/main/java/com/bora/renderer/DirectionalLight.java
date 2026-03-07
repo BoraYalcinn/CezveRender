@@ -7,6 +7,7 @@ public class DirectionalLight extends Light{
 
 	protected Vector3f direction;
 	private ShadowMap shadowMap;
+	private float orthoSize = 10f;
 	
 	public DirectionalLight() {
 		
@@ -34,11 +35,24 @@ public class DirectionalLight extends Light{
 	
 	public Matrix4f getLightSpaceMatrix() {
 		
-		Matrix4f lightProjection = new Matrix4f().ortho(-10f,10f,-10f,10f,0.1f,100f);
-		Matrix4f lightView = new Matrix4f().lookAt(new Vector3f(direction).mul(-20f),new Vector3f(0,0,0),new Vector3f(0,1,0));
+		Matrix4f lightProjection = new Matrix4f().ortho(-orthoSize,orthoSize,-orthoSize,orthoSize,0.1f,100f);
+		Vector3f lightPos = new Vector3f(direction).mul(-20f);
+		Matrix4f lightView = new Matrix4f().lookAt(lightPos,new Vector3f(0,0,0),new Vector3f(0,1,0));
 		
 		return new Matrix4f(lightProjection).mul(lightView);
 	}
+
+	public Matrix4f getLightViewMatrix() {
+		Vector3f lightPos = new Vector3f(direction).mul(-20f);
+		return new Matrix4f().lookAt(lightPos, new Vector3f(0,0,0), new Vector3f(0,1,0));
+	}
+
+	public Matrix4f getLightProjectionMatrix() {
+		return new Matrix4f().ortho(-orthoSize,orthoSize,-orthoSize,orthoSize,0.1f,100f);
+	}
+
+	public float getOrthoSize() { return orthoSize; }
+	public void setOrthoSize(float size) { this.orthoSize = java.lang.Math.max(1f, size); }
 	
 	public ShadowMap getShadowMap() {
 		return shadowMap;

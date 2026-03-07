@@ -32,6 +32,7 @@ public class Model {
 	}
 	
 	public void Draw(Shader shader) {
+		glActiveTexture(GL_TEXTURE0);    // Make sure we only touch unit 0
 		glBindTexture(GL_TEXTURE_2D,0);
 	    shader.setUniformMat4f(shader.getUniformModel(), transform.getModelMatrix());
 	    for(int i = 0; i < meshes.size(); i++) {

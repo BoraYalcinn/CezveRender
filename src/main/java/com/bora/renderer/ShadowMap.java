@@ -28,12 +28,24 @@ public class ShadowMap {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		// Set border color to 1.0 so fragments outside the shadow map are NOT in shadow
+		float[] borderColor = {1.0f, 1.0f, 1.0f, 1.0f};
+		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 		
 		this.depthMapFBO = glGenFramebuffers();
 		glBindFramebuffer(GL_FRAMEBUFFER,depthMapFBO);
 		glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,depthMap,0);
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
+
+		// Check FBO completeness
+		int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			System.err.println("[ERROR] Shadow FBO incomplete! Status: 0x" + Integer.toHexString(status));
+		} else {
+			System.out.println("[GL] Shadow FBO complete (" + shadowWidth + "x" + shadowHeight + ")");
+		}
+
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		
 		

@@ -1,5 +1,8 @@
 package com.bora.renderer;
 
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
@@ -7,8 +10,59 @@ import static org.lwjgl.opengl.GL33C.*;
 public class Main {
 	
 	private static Mesh[]  meshes = new Mesh[2];;
-	
-	
+
+	// Debug quad VAO for shadow map overlay
+	private static int debugQuadVAO = 0;
+
+	private static int initDebugQuad() {
+		float[] quadVertices = {
+			// positions   // texcoords  (bottom-right corner overlay)
+			 0.5f,  0.5f,   0.0f, 0.0f,
+			 1.0f,  0.5f,   1.0f, 0.0f,
+			 1.0f,  1.0f,   1.0f, 1.0f,
+			 0.5f,  1.0f,   0.0f, 1.0f,
+		};
+		int[] quadIndices = { 0, 1, 2, 0, 2, 3 };
+
+		int vao = glGenVertexArrays();
+		int vbo = glGenBuffers();
+		int ibo = glGenBuffers();
+
+		glBindVertexArray(vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, quadVertices, GL_STATIC_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, quadIndices, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 2, GL_FLOAT, false, 4 * Float.BYTES, 0L);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 2, GL_FLOAT, false, 4 * Float.BYTES, 2L * Float.BYTES);
+		glEnableVertexAttribArray(1);
+
+		glBindVertexArray(0);
+		return vao;
+	}
+
+	private static void renderDebugQuad(Shader debugShader, int depthMap) {
+		glDisable(GL_DEPTH_TEST);
+		debugShader.useShader();
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
+		glUniform1i(glGetUniformLocation(debugShader.getProgramID(), "depthMap"), 0);
+		glUniform1f(glGetUniformLocation(debugShader.getProgramID(), "nearPlane"), 0.1f);
+		glUniform1f(glGetUniformLocation(debugShader.getProgramID(), "farPlane"), 100f);
+
+		glBindVertexArray(debugQuadVAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		glEnable(GL_DEPTH_TEST);
+		glUseProgram(0);
+	}
+
 		
 	public static void main(String[] args) {
 		System.out.println("Hello 3D renderer");
@@ -82,11 +136,34 @@ public class Main {
 		// Create Shader
 		Shader shader = new Shader("shaders/shader.vert","shaders/shader.frag");
 		Shader shadowShader = new Shader("shaders/shadow.vert", "shaders/shadow.frag");
-		
+		Shader debugShader = new Shader("shaders/debug_depth.vert", "shaders/debug_depth.frag");
+
+		// Init debug quad for shadow map overlay
+		debugQuadVAO = initDebugQuad();
+
+		// Toggle states
+		boolean useLightCamera = false;
+		boolean showShadowMap = true; // Show overlay by default for debugging
+		boolean f1WasPressed = false;
+		boolean f2WasPressed = false;
+		boolean f3WasPressed = false;
+		boolean shadowDebugView = false;
+		float shadowBias = 0.005f;
 		
 		
 		// Create Lights
 		DirectionalLight dirLight = new DirectionalLight(1f, 1f, 1f, 0.1f, 0.8f, 0f, -1f, -0.5f);
+
+		// Debug: print light camera info
+		Vector3f lightPos = new Vector3f(dirLight.getDirection()).mul(-20f);
+		System.out.println("[DEBUG] Light direction: " + dirLight.getDirection());
+		System.out.println("[DEBUG] Light camera pos: " + lightPos);
+		System.out.println("[DEBUG] Light ortho: +-" + dirLight.getOrthoSize() + ", near=0.1, far=100");
+		System.out.println("[DEBUG] Light lookAt target: (0,0,0)");
+		System.out.println("[DEBUG] F1 = toggle light camera | F2 = toggle shadow overlay");
+		System.out.println("[DEBUG] In light-cam mode: W/S = increase/decrease ortho size");
+		System.out.println("[DEBUG] P = increase bias | O = decrease bias (step 0.001)");
+		System.out.println("[DEBUG] F3 = toggle shadow debug view (green=lit, red=shadow)");
 
 		PointLight[] pointLights = new PointLight[2];
 		pointLights[0] = new PointLight(0f, 0f, 1f,
@@ -144,9 +221,14 @@ public class Main {
 			shadowShader.useShader();
 			shadowShader.setUniformMat4f(shadowShader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
 
+			// Draw xwing with front-face culling (closed mesh — has back faces)
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_FRONT);
 			shadowShader.setUniformMat4f(shadowShader.getUniformModel(), xwing.getTransform().getModelMatrix());
 			xwing.Draw(shadowShader);
+			glDisable(GL_CULL_FACE);
 
+			// Draw single-sided geometry WITHOUT culling (floor, pyramid have no back faces)
 			shadowShader.setUniformMat4f(shadowShader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
 			meshes[0].renderMesh();
 
@@ -159,9 +241,55 @@ public class Main {
 			
 			glfwPollEvents();
 			renderer.clear();
+
+			// --- Toggle keys (edge-detect) ---
+			boolean f1Down = input.isKeyDown(GLFW_KEY_F1);
+			if (f1Down && !f1WasPressed) {
+				useLightCamera = !useLightCamera;
+				System.out.println("[DEBUG] Camera: " + (useLightCamera ? "LIGHT" : "PLAYER"));
+			}
+			f1WasPressed = f1Down;
+
+			boolean f2Down = input.isKeyDown(GLFW_KEY_F2);
+			if (f2Down && !f2WasPressed) {
+				showShadowMap = !showShadowMap;
+				System.out.println("[DEBUG] Shadow map overlay: " + (showShadowMap ? "ON" : "OFF"));
+			}
+			f2WasPressed = f2Down;
+
+			boolean f3Down = input.isKeyDown(GLFW_KEY_F3);
+			if (f3Down && !f3WasPressed) {
+				shadowDebugView = !shadowDebugView;
+				System.out.println("[DEBUG] Shadow debug view: " + (shadowDebugView ? "ON (green=lit, red=shadow)" : "OFF"));
+			}
+			f3WasPressed = f3Down;
+
+			// --- Bias controls: P = increase, O = decrease ---
+			if (input.isKeyDown(GLFW_KEY_P)) {
+				shadowBias += 0.001f;
+				System.out.println("[DEBUG] shadowBias = " + String.format("%.4f", shadowBias));
+			}
+			if (input.isKeyDown(GLFW_KEY_O)) {
+				shadowBias -= 0.001f;
+				System.out.println("[DEBUG] shadowBias = " + String.format("%.4f", shadowBias));
+			}
+
+			// --- Frustum controls (only in light camera mode): W/S = size, A/D = size ---
+			if (useLightCamera) {
+				if (input.isKeyDown(GLFW_KEY_W)) {
+					dirLight.setOrthoSize(dirLight.getOrthoSize() + 0.5f);
+					System.out.println("[DEBUG] orthoSize = " + String.format("%.1f", dirLight.getOrthoSize()));
+				}
+				if (input.isKeyDown(GLFW_KEY_S)) {
+					dirLight.setOrthoSize(dirLight.getOrthoSize() - 0.5f);
+					System.out.println("[DEBUG] orthoSize = " + String.format("%.1f", dirLight.getOrthoSize()));
+				}
+			}
 			
-			// Handle Camera Movements
-			camera.handleMovement(velocity, camera, input, sensitivity);
+			// Handle Camera Movements (only when using player camera)
+			if (!useLightCamera) {
+				camera.handleMovement(velocity, camera, input, sensitivity);
+			}
 			
 			shader.useShader();
 
@@ -172,11 +300,12 @@ public class Main {
 			shader.setUniformMat4f(shader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
 
 			shader.setDirectionalLight(dirLight);
-			
-			// set lights 
-			shader.setDirectionalLight(dirLight);
-			// shader.setPointLights(pointLights);
-			// shader.setSpotLights(spotLights);
+
+			// Set shadow bias uniform
+			glUniform1f(glGetUniformLocation(shader.getProgramID(), "shadowBiasMultiplier"), shadowBias);
+
+			// Set debug mode
+			glUniform1i(glGetUniformLocation(shader.getProgramID(), "debugMode"), shadowDebugView ? 1 : 0);
 			
 			// view position
 			glUniform3f(glGetUniformLocation(shader.getProgramID(), "viewPos"),
@@ -185,10 +314,14 @@ public class Main {
 				    camera.getTransform().position.z);
 			
 			
-			// matrices
-			
-            shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
-            shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
+			// matrices — switch between player cam and light cam
+			if (useLightCamera) {
+				shader.setUniformMat4f(shader.getUniformView(), dirLight.getLightViewMatrix());
+				shader.setUniformMat4f(shader.getUniformProjection(), dirLight.getLightProjectionMatrix());
+			} else {
+				shader.setUniformMat4f(shader.getUniformView(), camera.getViewMatrix());
+				shader.setUniformMat4f(shader.getUniformProjection(), camera.getProjectionMatrix());
+			}
             
             // Draw Models
             
@@ -215,6 +348,11 @@ public class Main {
             
 			
 			glUseProgram(0);
+
+			// --- Draw shadow map debug overlay ---
+			if (showShadowMap) {
+				renderDebugQuad(debugShader, dirLight.getShadowMap().getDepthMap());
+			}
 			
 			renderer.swapBuffers();
 			renderer.clear();
