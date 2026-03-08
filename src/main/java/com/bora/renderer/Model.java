@@ -191,8 +191,10 @@ public class Model {
 	    
 	    String fileName = materialTextures.get(name);
 	    if (fileName == null) {
-	        System.out.println("Texture cannot be found: " + name);
-	        return null;
+	        System.out.println("Texture cannot be found: " + name+  "-- using plain.png");
+	        Texture fallback = new Texture("textures/plain.png");
+	        fallback.loadTexture();
+	        return fallback;
 	    }
 
 	    

@@ -115,7 +115,7 @@ public class Main {
 		
 
 		// Create Model
-		Model xwing = new Model("models/xwing.obj");
+		Model xwing = new Model("models/TaleWorlds.obj");
 		xwing.getTransform().position.set(0f, -2.f, 0f);
 		
 		// Create Texture
@@ -347,7 +347,7 @@ public class Main {
 			shader.setUniformMat4f(shader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
 
 			// set dir light
-			// shader.setDirectionalLight(dirLight);
+			shader.setDirectionalLight(dirLight);
 			// set spot light
 			for(int i = 0; i < spotLights.length; i++) {
 			    glActiveTexture(GL_TEXTURE2 + i);
@@ -361,7 +361,7 @@ public class Main {
 			    glUniform1i(glGetUniformLocation(shader.getProgramID(), "pointShadowMaps[" + i + "]"), 2 + spotLights.length + i);
 			}
 			glUniform1f(glGetUniformLocation(shader.getProgramID(), "farPlane"), 100f);
-			shader.setPointLights(pointLights);
+			// shader.setPointLights(pointLights);
 			
 			
 			
