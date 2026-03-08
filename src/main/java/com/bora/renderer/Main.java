@@ -137,7 +137,8 @@ public class Main {
 		Shader shader = new Shader("shaders/shader.vert","shaders/shader.frag");
 		Shader shadowShader = new Shader("shaders/shadow.vert", "shaders/shadow.frag");
 		Shader debugShader = new Shader("shaders/debug_depth.vert", "shaders/debug_depth.frag");
-
+		Shader omniShadowShader = new Shader("shaders/omni_shadow.vert", "shaders/omni_shadow.geom", "shaders/omni_shadow.frag");
+		
 		// Init debug quad for shadow map overlay
 		debugQuadVAO = initDebugQuad();
 
@@ -149,6 +150,7 @@ public class Main {
 		boolean f3WasPressed = false;
 		boolean shadowDebugView = false;
 		float shadowBias = 0.005f;
+		
 		
 		
 		// Create Lights
@@ -179,7 +181,7 @@ public class Main {
 		SpotLight[] spotLights = new SpotLight[2];
 
 		spotLights[0] = new SpotLight(
-		        0f, 0f, 1f,        
+		        1f, 1f, 1f,        
 		        0.0f, 2.0f,        
 		        0f, 8f, 2f,        
 		        0f, -1f, 0f,       
@@ -188,7 +190,7 @@ public class Main {
 		);
 
 		spotLights[1] = new SpotLight(
-		        1f, 0f, 0f,        
+		        1f, 1f, 1f,        
 		        0.0f, 2.0f,
 		        -2f, 8f, 0f,
 		        0f, -1f, 0f,
@@ -237,7 +239,52 @@ public class Main {
 
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0, 0, 1600, 1080);
-			// ─── SHADOW PASS BİTTİ ─────────────────────────────────────
+			// ─── SHADOW PASS DONE ─────────────────────────────────────
+			
+			// ─── SPOT SHADOW PASS ─────────────────────────────────
+			shadowShader.useShader();
+			for(int i = 0; i < spotLights.length; i++) {
+			    glBindFramebuffer(GL_FRAMEBUFFER, spotLights[i].getShadowMap().getDepthMapFBO());
+			    glViewport(0, 0, 1024, 1024);
+			    glClear(GL_DEPTH_BUFFER_BIT);
+			    shadowShader.setUniformMat4f(shadowShader.getUniformLightSpaceMatrix(), spotLights[i].getLightSpaceMatrix());
+			    shadowShader.setUniformMat4f(shadowShader.getUniformModel(), xwing.getTransform().getModelMatrix());
+			    xwing.Draw(shadowShader);
+			    shadowShader.setUniformMat4f(shadowShader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
+			    meshes[0].renderMesh();
+			    shadowShader.setUniformMat4f(shadowShader.getUniformModel(), meshes[1].getTransform().getModelMatrix());
+			    meshes[1].renderMesh();
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, 1600, 1080);
+			// ─── SPOT SHADOW PASS BİTTİ ──────────────────────────
+			
+			// ─── POINT SHADOW PASS ────────────────────────────────
+			omniShadowShader.useShader();
+			for(int i = 0; i < pointLights.length; i++) {
+			    glBindFramebuffer(GL_FRAMEBUFFER, pointLights[i].getCubeShadowMap().getDepthMapFBO());
+			    glViewport(0, 0, 1024, 1024);
+			    glClear(GL_DEPTH_BUFFER_BIT);
+			    
+			    Matrix4f[] matrices = pointLights[i].getLightSpaceMatrices();
+			    for(int face = 0; face < 6; face++) {
+			        int loc = glGetUniformLocation(omniShadowShader.getProgramID(), "lightSpaceMatrices[" + face + "]");
+			        omniShadowShader.setUniformMat4f(loc, matrices[face]);
+			    }
+			    glUniform3f(glGetUniformLocation(omniShadowShader.getProgramID(), "lightPos"),
+			        pointLights[i].getPosition().x, pointLights[i].getPosition().y, pointLights[i].getPosition().z);
+			    glUniform1f(glGetUniformLocation(omniShadowShader.getProgramID(), "farPlane"), 100f);
+			    
+			    omniShadowShader.setUniformMat4f(omniShadowShader.getUniformModel(), xwing.getTransform().getModelMatrix());
+			    xwing.Draw(omniShadowShader);
+			    omniShadowShader.setUniformMat4f(omniShadowShader.getUniformModel(), meshes[0].getTransform().getModelMatrix());
+			    meshes[0].renderMesh();
+			    omniShadowShader.setUniformMat4f(omniShadowShader.getUniformModel(), meshes[1].getTransform().getModelMatrix());
+			    meshes[1].renderMesh();
+			}
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0, 0, 1600, 1080);
+			// ─── POINT SHADOW PASS BİTTİ ──────────────────────────
 			
 			glfwPollEvents();
 			renderer.clear();
@@ -299,8 +346,25 @@ public class Main {
 			glUniform1i(glGetUniformLocation(shader.getProgramID(), "shadowMap"), 1);
 			shader.setUniformMat4f(shader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
 
-			shader.setDirectionalLight(dirLight);
-
+			// set dir light
+			// shader.setDirectionalLight(dirLight);
+			// set spot light
+			for(int i = 0; i < spotLights.length; i++) {
+			    glActiveTexture(GL_TEXTURE2 + i);
+			    glBindTexture(GL_TEXTURE_2D, spotLights[i].getShadowMap().getDepthMap());
+			}
+			// shader.setSpotLights(spotLights);
+			// set point lights
+			for(int i = 0; i < pointLights.length; i++) {
+			    glActiveTexture(GL_TEXTURE2 + spotLights.length + i);
+			    glBindTexture(GL_TEXTURE_CUBE_MAP, pointLights[i].getCubeShadowMap().getDepthMap());
+			    glUniform1i(glGetUniformLocation(shader.getProgramID(), "pointShadowMaps[" + i + "]"), 2 + spotLights.length + i);
+			}
+			glUniform1f(glGetUniformLocation(shader.getProgramID(), "farPlane"), 100f);
+			shader.setPointLights(pointLights);
+			
+			
+			
 			// Set shadow bias uniform
 			glUniform1f(glGetUniformLocation(shader.getProgramID(), "shadowBiasMultiplier"), shadowBias);
 

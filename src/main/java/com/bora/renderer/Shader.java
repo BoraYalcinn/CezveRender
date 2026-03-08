@@ -47,6 +47,40 @@ public class Shader {
 		
 	}
 	
+	// OVERLOADED CONSTRUCTOR FOR GEOMETRY SHADER
+	public Shader(String vertPath, String geomPath, String fragPath) {
+		
+	    shaderID = glCreateProgram();
+	    
+	    String vertexResource = loadResource(vertPath);
+	    String geomResource = loadResource(geomPath);
+	    String fragmentResource = loadResource(fragPath);
+	    
+	    compileShaderWithGeom(vertexResource, geomResource,fragmentResource);
+	    
+	    uniformSpecularIntensity = glGetUniformLocation(shaderID,"material.specularIntensity");
+	    uniformShininess = glGetUniformLocation(shaderID,"material.shininess");
+	}
+	// NEW COMPILE SHADER FOR GEOMETRY SHADER
+	private void compileShaderWithGeom(String vertResource,String geomResource, String fragResource) {
+		
+	    addShader(vertResource, GL_VERTEX_SHADER);
+	    addShader(geomResource, GL_GEOMETRY_SHADER);
+	    addShader(fragResource, GL_FRAGMENT_SHADER);
+	    
+	    glLinkProgram(shaderID);
+	    
+	    if (glGetProgrami(shaderID, GL_LINK_STATUS) == GL_FALSE) {
+	        throw new RuntimeException("Error linking shader program:\n" + glGetProgramInfoLog(shaderID));
+	    }
+	    
+	    glValidateProgram(shaderID);
+	    
+	    uniformModel = glGetUniformLocation(shaderID, "model");
+	    uniformLightSpaceMatrix = glGetUniformLocation(shaderID, "lightSpaceMatrices[0]");
+	}
+	
+	
 	private void compileShader(String verResource,String fragResource) {
 		
 		addShader(verResource,GL_VERTEX_SHADER);
@@ -168,7 +202,13 @@ public class Shader {
 			glUniform3f(glGetUniformLocation(shaderID,prefix + "direction"),
 							s.direction.x,s.direction.y,s.direction.z);
 			
-			glUniform1f(glGetUniformLocation(shaderID,prefix+ "edge"),s.procEdge);
+			glUniform1f(glGetUniformLocation(shaderID, prefix + "edge"), s.procEdge);
+
+			// spot shadow matrix
+			int matLoc = glGetUniformLocation(shaderID, "spotLightSpaceMatrices[" + i + "]");
+			setUniformMat4f(matLoc, s.getLightSpaceMatrix());
+
+			glUniform1i(glGetUniformLocation(shaderID, "spotShadowMaps[" + i + "]"), 2 + i);
 		}
 	}
 	

@@ -1,12 +1,16 @@
 package com.bora.renderer;
 
 import org.joml.*;
+import org.joml.Math;
+
 import static org.lwjgl.opengl.GL33C.*;
 
 public class PointLight extends Light{
 
 	protected float constant,linear,exponent;
 	protected Vector3f position;
+	
+	private CubeShadowMap shadowMap;
 	
 	public PointLight() {
 		
@@ -21,6 +25,8 @@ public class PointLight extends Light{
 		this.linear = lin;
 		this.exponent = exp;
 		this.position = new Vector3f(xPos,yPos,zPos);
+		this.shadowMap = new CubeShadowMap(1024,1024);
+		shadowMap.InitializeShadows();
 	
 	}
 	
@@ -34,6 +40,24 @@ public class PointLight extends Light{
 		glUniform1f(constantLocation,constant);
 		glUniform1f(linearLocation,linear);
 		glUniform1f(exponentLocation,exponent);
+	}
+	
+	public Matrix4f[] getLightSpaceMatrices() {
+	    Matrix4f projection = new Matrix4f().perspective(
+	        (float)Math.toRadians(90f), 1.0f, 0.1f, 100f);
+	    
+	    return new Matrix4f[] {
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 1, 0, 0), new Vector3f(0,-1, 0))),
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add(-1, 0, 0), new Vector3f(0,-1, 0))),
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 0, 1, 0), new Vector3f(0, 0, 1))),
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 0,-1, 0), new Vector3f(0, 0,-1))),
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 0, 0, 1), new Vector3f(0,-1, 0))),
+	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 0, 0,-1), new Vector3f(0,-1, 0)))
+	    };
+	}
+	
+	public CubeShadowMap getCubeShadowMap() {
+		return shadowMap;
 	}
 	
 	public float getExponent() {
