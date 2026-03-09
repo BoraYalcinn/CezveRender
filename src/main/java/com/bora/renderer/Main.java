@@ -77,6 +77,11 @@ public class Main {
 		renderer.run();
 		
 		
+
+		// set skybox
+		Skybox skybox = new Skybox("textures/skybox");
+		Shader skyboxShader = new Shader("shaders/skybox.vert", "shaders/skybox.frag");
+		
 		// Mesh Data
 		int[] indices = {
 		        0, 3, 1,
@@ -286,6 +291,8 @@ public class Main {
 			glViewport(0, 0, 1600, 1080);
 			// ─── POINT SHADOW PASS BİTTİ ──────────────────────────
 			
+			
+			
 			glfwPollEvents();
 			renderer.clear();
 
@@ -410,6 +417,7 @@ public class Main {
                     );
             meshes[1].renderMesh();
             
+            skybox.render(skyboxShader, camera);
 			
 			glUseProgram(0);
 
@@ -424,6 +432,8 @@ public class Main {
 			if (input.isKeyDown(GLFW_KEY_ESCAPE)) {
 		        glfwSetWindowShouldClose(renderer.getWindow(), true);
 		    }
+			
+			
 		}
 		
 		// clear
