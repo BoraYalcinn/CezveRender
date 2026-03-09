@@ -34,8 +34,10 @@ public class CubeShadowMap {
 		depthMapFBO = glGenFramebuffers();
 		glBindFramebuffer(GL_FRAMEBUFFER,depthMapFBO);
 		glFramebufferTexture(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,depthMap,0);
+		
 		glDrawBuffer(GL_NONE);
 		glReadBuffer(GL_NONE);
+		
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
 	

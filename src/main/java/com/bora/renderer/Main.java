@@ -173,14 +173,14 @@ public class Main {
 		System.out.println("[DEBUG] F3 = toggle shadow debug view (green=lit, red=shadow)");
 
 		PointLight[] pointLights = new PointLight[2];
-		pointLights[0] = new PointLight(0f, 0f, 1f,
-										0.5f, 0.9f,
-										4.0f, 0f, 0f,
-										0.3f, 0.2f, 0.1f);
+		pointLights[0] = new PointLight(1f, 1f, 1f,
+										0.5f, 0.7f,
+										0.0f, 2f, -3f,
+										0.3f, 0.1f, 0.1f);
 		
-		pointLights[1] = new PointLight(0f, 1f, 0f,
-										0.6f, 1f, 
-										-4.f, 2.0f, 0f, 
+		pointLights[1] = new PointLight(1f, 1f, 1f,
+										0.5f, 0.7f, 
+										-3.f, 2.0f, 0f, 
 										0.3f, 0.1f, 0.1f);
 		
 		SpotLight[] spotLights = new SpotLight[2];
@@ -354,7 +354,7 @@ public class Main {
 			shader.setUniformMat4f(shader.getUniformLightSpaceMatrix(), dirLight.getLightSpaceMatrix());
 
 			// set dir light
-			shader.setDirectionalLight(dirLight);
+			// shader.setDirectionalLight(dirLight);
 			// set spot light
 			for(int i = 0; i < spotLights.length; i++) {
 			    glActiveTexture(GL_TEXTURE2 + i);
@@ -368,7 +368,7 @@ public class Main {
 			    glUniform1i(glGetUniformLocation(shader.getProgramID(), "pointShadowMaps[" + i + "]"), 2 + spotLights.length + i);
 			}
 			glUniform1f(glGetUniformLocation(shader.getProgramID(), "farPlane"), 100f);
-			// shader.setPointLights(pointLights);
+			shader.setPointLights(pointLights);
 			
 			
 			

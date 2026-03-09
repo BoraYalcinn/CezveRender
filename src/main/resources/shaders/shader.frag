@@ -190,14 +190,16 @@ float CalcSpotShadow(sampler2D sMap, vec4 fragPosLightSpace, vec3 normal, vec3 l
     return shadow / 9.0;
 }
 
-float CalcPointShadow(samplerCube shadowCube, vec3 fragPos, vec3 lightPos){
+float CalcPointShadow(samplerCube shadowCube, vec3 fragPos, vec3 lightPos, vec3 normal){
     vec3 fragToLight = fragPos - lightPos;
-    float currentDepth = length(fragToLight);
-    currentDepth = currentDepth / farPlane;
-    
-    float bias = 0.05;
+    float currentDepth = length(fragToLight) / farPlane;
+
+    vec3 lightDir = normalize(fragToLight);
+    float bias = max(0.005 * (1.0 - dot(normal, -lightDir)), 0.0005);
+
     float shadow = 0.0;
-    
+    float diskRadius = (1.0 + currentDepth) / 25.0;
+
     vec3 sampleOffsetDirections[20] = vec3[](
         vec3(1,1,1), vec3(1,-1,1), vec3(-1,-1,1), vec3(-1,1,1),
         vec3(1,1,-1), vec3(1,-1,-1), vec3(-1,-1,-1), vec3(-1,1,-1),
@@ -205,11 +207,10 @@ float CalcPointShadow(samplerCube shadowCube, vec3 fragPos, vec3 lightPos){
         vec3(1,0,1), vec3(-1,0,1), vec3(1,0,-1), vec3(-1,0,-1),
         vec3(0,1,1), vec3(0,-1,1), vec3(0,-1,-1), vec3(0,1,-1)
     );
-    
-    float diskRadius = 0.05;
+
     for(int i = 0; i < 20; i++){
         float closestDepth = texture(shadowCube, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
-        shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
+        shadow += currentDepth - bias > closestDepth ? 0.0 : 1.0;
     }
     return shadow / 20.0;
 }
@@ -230,7 +231,7 @@ void main(){
 	
 	//Point Light
 	for(int i = 0; i < pointLightCount; i++){
-    		float pointShadow = CalcPointShadow(pointShadowMaps[i], fragPos, pointLights[i].position);
+    		float pointShadow = CalcPointShadow(pointShadowMaps[i], fragPos, pointLights[i].position,norm);
     		vec3 ambient = pointLights[i].base.color * pointLights[i].base.ambientIntensity;
     		vec3 lighting = CalcPointLight(pointLights[i], norm, fragPos);
     		result += ambient + (lighting - ambient) * (1.0 - pointShadow);
