@@ -210,7 +210,7 @@ float CalcPointShadow(samplerCube shadowCube, vec3 fragPos, vec3 lightPos, vec3 
 
     for(int i = 0; i < 20; i++){
         float closestDepth = texture(shadowCube, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
-        shadow += currentDepth - bias > closestDepth ? 0.0 : 1.0;
+        shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
     }
     return shadow / 20.0;
 }
@@ -231,10 +231,8 @@ void main(){
 	
 	//Point Light
 	for(int i = 0; i < pointLightCount; i++){
-    		float pointShadow = CalcPointShadow(pointShadowMaps[i], fragPos, pointLights[i].position,norm);
-    		vec3 ambient = pointLights[i].base.color * pointLights[i].base.ambientIntensity;
-    		vec3 lighting = CalcPointLight(pointLights[i], norm, fragPos);
-    		result += ambient + (lighting - ambient) * (1.0 - pointShadow);
+    	float pointShadow = 1.0 - CalcPointShadow(pointShadowMaps[i], fragPos, pointLights[i].position, norm);
+    	result += CalcPointLight(pointLights[i], norm, fragPos) * pointShadow;
 	}
 	
 	//Spot Light 
