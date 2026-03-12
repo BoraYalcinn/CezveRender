@@ -29,7 +29,7 @@ Contact : borayalcintr@gmail.com
 | Scene | Shadow Debug | ImGui Editor |
 |---|---|---|
 | <img alt="scene_img" src="https://github.com/user-attachments/assets/915001bb-0f07-477b-967b-a1bddfef1acd" /> | <img alt="shadow_img" src="https://github.com/user-attachments/assets/67adb3d3-b858-43d6-95eb-47b27cd1fc23" /> | <img alt="editor_img" src="https://github.com/user-attachments/assets/df96c1db-b63a-44b8-ae25-0818e163692b" /> |
-▶️ **[Full project showcase on YouTube](https://youtube.com/your-link-here)** (showcase video is under production !)
+▶️ **[Full project showcase on YouTube](https://youtube.com/watch?v=AYtOxsVArtw)** 
 
 ---
 
