@@ -48,6 +48,11 @@ public class Input {
     public boolean isKeyDown(int key) {
         return keys[key];
     }
+    
+
+    // =========================================================================
+    //  GETTERS
+    // =========================================================================
 
     
     public float getXChange() {

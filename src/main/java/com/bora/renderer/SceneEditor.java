@@ -2,6 +2,7 @@ package com.bora.renderer;
 
 import imgui.ImGui;
 import imgui.ImGuiIO;
+import imgui.ImVec2;
 import imgui.flag.*;
 import imgui.gl3.ImGuiImplGl3;
 import imgui.glfw.ImGuiImplGlfw;
@@ -72,6 +73,10 @@ public class SceneEditor {
     private final float[] meshSz   = {1f};
     private final float[] meshY    = {-3f};
     private int           meshTex  = -1;
+    
+    // Handle Material
+    private final float[] shininess = {32f}; 
+    private final float[] sIntensity = {1f};
 
     //Handle Model 
     private final ImString modelInput = new ImString(256);
@@ -87,11 +92,17 @@ public class SceneEditor {
     private final ImBoolean lightCam    = new ImBoolean(false);
     private final ImBoolean shadowDebug = new ImBoolean(false);
 
+    // Window size
+    private final int windowHeight;
+    private final int windowWidth;
     
-    public SceneEditor(long windowHandle, Scene scene) {
-        this.scene        = scene;
+    public SceneEditor(long windowHandle, Scene scene,int windowWidth,int windowHeight) {
+        this.windowHeight = windowHeight;
+        this.windowWidth = windowWidth;
+    	this.scene        = scene;
         this.windowHandle = windowHandle;
-
+        
+        
         ImGui.createContext();
         ImGuiIO io = ImGui.getIO();
         io.addConfigFlags(ImGuiConfigFlags.NavEnableKeyboard);
@@ -137,8 +148,8 @@ public class SceneEditor {
     //  LIGHTS USER INTERFACE
     // =========================================================================
     private void panelLights() {
-        ImGui.setNextWindowPos(10, 10, ImGuiCond.Once);
-        ImGui.setNextWindowSize(340, 600, ImGuiCond.Once);
+    	ImGui.setNextWindowPos(10, 30, ImGuiCond.Once);
+    	ImGui.setNextWindowSize(windowWidth * 0.21f, windowHeight * 0.55f, ImGuiCond.Once);
         ImGui.begin("Lights");
 
         // DIRECTIONAL LIGHTS
@@ -263,8 +274,8 @@ public class SceneEditor {
     //  SCENE PANEL
     // =========================================================================
     private void panelScene() {
-        ImGui.setNextWindowPos(10, 620, ImGuiCond.Once);
-        ImGui.setNextWindowSize(340, 420, ImGuiCond.Once);
+    	ImGui.setNextWindowPos(10, windowHeight * 0.57f, ImGuiCond.Once);
+    	ImGui.setNextWindowSize(windowWidth * 0.21f, windowHeight * 0.41f, ImGuiCond.Once);
         ImGui.begin("Scene");
 
         //Floor
@@ -274,10 +285,14 @@ public class SceneEditor {
             String[] txOpts = texComboItems();
             ImInt fi = new ImInt(floorTex + 1);
             if (ImGui.combo("Tex##fl", fi, txOpts)) floorTex = fi.get() - 1;
+            
+            ImGui.sliderFloat("Shininess##f1",shininess,1f,512f);
+            ImGui.sliderFloat("SpecIntens##f1", sIntensity,0f ,4f);
+            
             if (ImGui.button("Rebuild Floor")) {
                 Mesh nf = MeshFactory.createFloor(floorSz[0], floorY[0]);
                 Texture t = (floorTex >= 0 && floorTex < textures.size()) ? textures.get(floorTex) : null;
-                scene.setFloor(nf, t, null);
+                scene.setFloor(nf, t, new Material(shininess[0],sIntensity[0]));
             }
         }
 
@@ -311,12 +326,25 @@ public class SceneEditor {
                 if (ImGui.button("X##rmsh")) toRemove = i;
                 ImGui.popID();
             }
+            
             if (toRemove >= 0) {
                 scene.getMeshes().remove(toRemove);
                 if (selMesh == toRemove)     selMesh = -1;
                 else if (selMesh > toRemove) selMesh--;
             }
+            
         }
+
+        if (selMesh >= 0 && selMesh < scene.getMeshes().size()) {
+            ImGui.separator();
+            ImGui.textColored(0.9f, 0.7f, 0.3f, 1f, "Material — Mesh " + selMesh);
+            ImGui.sliderFloat("Shininess##ms",  shininess,  1f, 512f);
+            ImGui.sliderFloat("SpecIntens##ms", sIntensity, 0f, 4f);
+            if (ImGui.button("Apply Material##ms")) {
+                scene.setMeshMaterial(selMesh, new Material(shininess[0], sIntensity[0]));
+            }
+        }
+        
 
         ImGui.separator();
 
@@ -408,8 +436,8 @@ public class SceneEditor {
     //  TEXTURE PANEL
     // =========================================================================
     private void panelTextures() {
-        ImGui.setNextWindowPos(1270, 250, ImGuiCond.Once);
-        ImGui.setNextWindowSize(320, 200, ImGuiCond.Once);
+    	ImGui.setNextWindowPos(windowWidth * 0.79f, windowHeight * 0.22f, ImGuiCond.Once);
+    	ImGui.setNextWindowSize(windowWidth * 0.21f, windowHeight * 0.18f, ImGuiCond.Once);
         ImGui.begin("Textures");
 
         for (int i = 0; i < texNames.size(); i++)
@@ -423,13 +451,12 @@ public class SceneEditor {
         if (ImGui.button("Load Texture")) {
             String raw = texInput.get().trim();
             if (!raw.isEmpty()) {
-                // Classpath'e uygun path — backslash → forward slash
+                // adjust it for classpath
                 String path = raw.replace('\\', '/');
                 try {
                     Texture t = new Texture(path);
                     t.loadTexture();
                     textures.add(t);
-                    // İsim: son / 'dan sonrası
                     int slash = path.lastIndexOf('/');
                     texNames.add(slash >= 0 ? path.substring(slash + 1) : path);
                     texInput.set("");
@@ -469,6 +496,7 @@ public class SceneEditor {
             slDir[0],slDir[1],slDir[2], slConst[0],slLin[0],slExp[0],slEdge[0]);
     }
 
+    
     private void loadPLForm(PointLight p) {
         plColor[0]=p.getColor().x; plColor[1]=p.getColor().y; plColor[2]=p.getColor().z;
         plPos[0]=p.getPosition().x; plPos[1]=p.getPosition().y; plPos[2]=p.getPosition().z;

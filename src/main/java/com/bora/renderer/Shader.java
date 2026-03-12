@@ -25,7 +25,10 @@ public class Shader {
 	private int uniformSpecularIntensity;
 	private int uniformShininess;
 	
-	
+
+    // =========================================================================
+    //  CONSTRUCTORS
+    // =========================================================================
 	public Shader() {
 		shaderID = 0;
 		uniformProjection = 0;
@@ -61,7 +64,12 @@ public class Shader {
 	    uniformSpecularIntensity = glGetUniformLocation(shaderID,"material.specularIntensity");
 	    uniformShininess = glGetUniformLocation(shaderID,"material.shininess");
 	}
-	// NEW COMPILE SHADER FOR GEOMETRY SHADER
+	
+
+    // =========================================================================
+    //  COMPILE SHADER METHODS
+    // =========================================================================
+	// COMPILE SHADER FOR GEOMETRY SHADER
 	private void compileShaderWithGeom(String vertResource,String geomResource, String fragResource) {
 		
 	    addShader(vertResource, GL_VERTEX_SHADER);
@@ -121,6 +129,10 @@ public class Shader {
         glDeleteShader(theShader);
 	}
 	
+
+    // =========================================================================
+    //  GETTERS AND SETTERS
+    // =========================================================================
 	public void setUniformMat4f(int uniformLocation, Matrix4f matrix) {
         try(MemoryStack stack = MemoryStack.stackPush()) {
             FloatBuffer fb = stack.mallocFloat(16);	

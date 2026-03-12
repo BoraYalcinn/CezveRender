@@ -11,6 +11,7 @@ public class Scene {
     private final List<Mesh>    meshes       = new ArrayList<>();
     private final List<Model>   models       = new ArrayList<>();
     private final List<Texture> meshTextures = new ArrayList<>(); 
+    private final List<Material> meshMaterials = new ArrayList<>();
     private Mesh floor;
 
     // lights
@@ -167,6 +168,9 @@ public class Scene {
             if (i < meshTextures.size() && meshTextures.get(i) != null) {
                 meshTextures.get(i).useTexture();
             }
+            if(i < meshMaterials.size() && meshMaterials.get(i) != null) {
+            	meshMaterials.get(i).useMaterial(mainShader.getUniformSpecularIntensity(),mainShader.getUniformShininess());
+            }
             m.renderMesh();
         }
 
@@ -210,7 +214,7 @@ public class Scene {
     }
 
     // ==========================================================================
-    //  SETTERS / ADDERS / GETTERS
+    //  GETTER AND SETTERS ALSO ADDERS :=)
     // ==========================================================================
 
     public void setDirLight(DirectionalLight d)     { this.dirLight    = d; }
@@ -233,12 +237,19 @@ public class Scene {
     public void addMesh(Mesh m) {
         meshes.add(m);
         meshTextures.add(null);
+        meshMaterials.add(new Material(32f, 1f));
+    }
+
+    public void setMeshMaterial(int i, Material mat) {
+        if (i >= 0 && i < meshMaterials.size()) meshMaterials.set(i, mat);
     }
 
     
     public void setMeshTexture(int index, Texture t) {
         if (index >= 0 && index < meshTextures.size()) meshTextures.set(index, t);
     }
+    
+    
 
     public DirectionalLight getDirLight()    { return dirLight; }
     public List<PointLight> getPointLights() { return pointLights; }

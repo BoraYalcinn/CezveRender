@@ -10,6 +10,8 @@ import org.joml.Vector3f;
 
 public class Camera {
 	
+	
+	// VECTOR AND MATRIX FIELDS
 	private Transform transform = new Transform();
 	private Matrix4f projection = new Matrix4f();
 	
@@ -29,7 +31,6 @@ public class Camera {
 	public Matrix4f getViewMatrix() {
 	    
 	    
-
 	    Vector3f direction = new Vector3f();
 	    direction.x = (float) (Math.cos(pitch) * Math.sin(yaw));
 	    direction.y = (float) Math.sin(pitch); 
@@ -63,6 +64,10 @@ public class Camera {
 		if (input.isKeyDown(GLFW_KEY_A)) camera.getTransform().position.sub(new Vector3f(camera.getRight()).mul(velocity));
 		if (input.isKeyDown(GLFW_KEY_D)) camera.getTransform().position.add(new Vector3f(camera.getRight()).mul(velocity));
 	}
+
+    // =========================================================================
+    //  GETTERS
+    // =========================================================================
 	
 	public Matrix4f getProjectionMatrix() {
         return projection;

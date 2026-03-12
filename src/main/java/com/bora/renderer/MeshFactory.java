@@ -1,7 +1,11 @@
 package com.bora.renderer;
 
 public class MeshFactory {
+	
 
+    // =========================================================================
+    //  CREATE FLOOR
+    // =========================================================================
 
     public static Mesh createFloor(float size, float y) {
         float[] vertices = {
@@ -16,6 +20,11 @@ public class MeshFactory {
         m.createMesh(vertices, indices);
         return m;
     }
+    
+
+    // =========================================================================
+    //  CREATE SHAPE METHODS
+    // =========================================================================
 
     public static Mesh createPyramid(float size) {
         float h  = size;          

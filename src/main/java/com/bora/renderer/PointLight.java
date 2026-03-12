@@ -12,9 +12,7 @@ public class PointLight extends Light{
 	
 	private CubeShadowMap shadowMap;
 	
-	public PointLight() {
-		
-	}
+	public PointLight() {}
 		
 	public PointLight(float red,float green,float blue,
 			float aIntensity,float dIntensity,
@@ -55,6 +53,11 @@ public class PointLight extends Light{
 	        new Matrix4f(projection).mul(new Matrix4f().lookAt(position, new Vector3f(position).add( 0, 0,-1), new Vector3f(0,-1, 0)))
 	    };
 	}
+	
+
+    // =========================================================================
+    //  GETTERS
+    // =========================================================================
 	
 	public CubeShadowMap getCubeShadowMap() {
 		return shadowMap;

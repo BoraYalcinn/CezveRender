@@ -14,6 +14,7 @@ public class Skybox {
     private int cubemapTexture;
     private int VAO, VBO;
 
+    // SKYBOX VERTICES
     private static final float[] vertices = {
         -1, -1,  1,   1, -1,  1,   1,  1,  1,   1,  1,  1,  -1,  1,  1,  -1, -1,  1,
         -1, -1, -1,  -1,  1, -1,   1,  1, -1,   1,  1, -1,   1, -1, -1,  -1, -1, -1,

@@ -33,6 +33,11 @@ public class DirectionalLight extends Light{
 		
 	}
 	
+
+    // =========================================================================
+    //  GETTERS
+    // =========================================================================
+	
 	public Matrix4f getLightSpaceMatrix() {
 		
 		Matrix4f lightProjection = new Matrix4f().ortho(-orthoSize,orthoSize,-orthoSize,orthoSize,0.1f,100f);

@@ -3,10 +3,18 @@ package com.bora.renderer;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33C.*;
 
+import imgui.ImGui;
+import imgui.ImVec2;
+
 public class Main {
 
     private static int debugQuadVAO = 0;
 
+    
+
+    // =========================================================================
+    //  DEBUG FUNCTIONS
+    // =========================================================================
     private static int initDebugQuad() {
         float[] v = {
              0.5f, 0.5f,  0f, 0f,
@@ -43,12 +51,17 @@ public class Main {
         glEnable(GL_DEPTH_TEST);
         glUseProgram(0);
     }
+    
 
+    // =========================================================================
+    //  MAIN
+    // =========================================================================
     public static void main(String[] args) {
 
         // Window
-        Window window = new Window(1600, 1080);
+        Window window = new Window();
         window.run();
+        
 
         // Shaders
         Shader mainShader       = new Shader("shaders/shader.vert",      "shaders/shader.frag");
@@ -88,7 +101,7 @@ public class Main {
         Input input = new Input(window.getWindow());
 
         // GUI
-        SceneEditor editor = new SceneEditor(window.getWindow(), scene);
+        SceneEditor editor = new SceneEditor(window.getWindow(), scene, window.getWidth(), window.getHeight());;
 
         float speed = 3f, sensitivity = 1f;
         double lastTime = glfwGetTime();
@@ -107,7 +120,9 @@ public class Main {
 
             if (input.isKeyDown(GLFW_KEY_ESCAPE))
                 glfwSetWindowShouldClose(window.getWindow(), true);
-
+            
+            if(input.isKeyDown(GLFW_KEY_F))
+            	window.toggleFullScreen();
             
             if (!scene.useLightCamera && !editor.isGuiVisible())
                 camera.handleMovement(speed * dt, camera, input, sensitivity);
@@ -124,7 +139,8 @@ public class Main {
 
             window.swapBuffers();
         }
-
+        
+        // CLEAR
         editor.dispose();
         mainShader.clearShader();
         shadowShader.clearShader();

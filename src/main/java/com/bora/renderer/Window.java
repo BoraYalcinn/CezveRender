@@ -11,9 +11,14 @@ import static org.lwjgl.opengl.GL33C.*;
 
 public class Window {
 
-	private int width;
-	private int height;
+	private int winWidth;
+	private int winHeight;
+	private int monWidth;
+	private int monHeight;
+	
+	private boolean isFullScreen = false;
 	private long mainWindow;
+	
 	private IntBuffer bufferHeight;
 	private IntBuffer bufferWidth;
 	
@@ -21,19 +26,32 @@ public class Window {
 	
 	public Window() {
 		
-		this.width = 800;
-		this.height = 600;
+		this.winWidth = 800;
+		this.winHeight = 600;
 	}
 	
 	public Window(int windowWidth,int windowHeight) {
-		this.width = windowWidth;
-		this.height = windowHeight;
+		this.winWidth = windowWidth;
+		this.winHeight = windowHeight;
 	}
 	
 	public void run() {
 		initializeWindow();
 	}
 	
+	public void toggleFullScreen() {
+	    long monitor = glfwGetPrimaryMonitor();
+	    GLFWVidMode vid = glfwGetVideoMode(monitor);
+	    if (!isFullScreen) {
+	        glfwSetWindowMonitor(mainWindow, monitor, 0, 0, vid.width(), vid.height(), vid.refreshRate());
+	        isFullScreen = true;
+	    } else {
+	        glfwSetWindowMonitor(mainWindow, 0,
+	            (monWidth - winWidth) / 2, (monHeight - winHeight) / 2,
+	            winWidth, winHeight, 0);
+	        isFullScreen = false;
+	    }
+	}
 	
 	public void initializeWindow() {
 		
@@ -49,7 +67,23 @@ public class Window {
 	    // Allow forward compatibility
 	    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 		
-	    mainWindow = glfwCreateWindow(width,height,"3D Renderer",0,0);
+	    
+	    
+	    // get monitor res
+	    GLFWVidMode vid= glfwGetVideoMode(glfwGetPrimaryMonitor());
+	    
+	    monWidth  = vid.width();
+	    monHeight = vid.height();
+	    // scale it so that it will fill out 80 percent of the users screen 
+	    // press F to to toggle FullScreen checkout main
+	    winWidth  = (int)(monWidth  * 0.8f);
+	    winHeight = (int)(monHeight * 0.8f);
+	    
+	    mainWindow = glfwCreateWindow(winWidth, winHeight, "3D Renderer", 0, 0);
+	    glfwSetWindowPos(mainWindow, (monWidth - winWidth) / 2, (monHeight - winHeight) / 2);
+	    
+	    
+	    
 	    if(mainWindow == 0) throw new RuntimeException("Failed to create the glfw window");
 	    
 	    this.bufferWidth = BufferUtils.createIntBuffer(1);
@@ -84,9 +118,9 @@ public class Window {
 		return glfwWindowShouldClose(mainWindow);
 	}
 	
-	public int getWidth() { return width; }
-    public int getHeight() { return height; }
-	
+	public int getWidth()  { int[] w = new int[1], h = new int[1]; glfwGetWindowSize(mainWindow, w, h); return w[0]; }
+	public int getHeight() { int[] w = new int[1], h = new int[1]; glfwGetWindowSize(mainWindow, w, h); return h[0]; }
+
 	public IntBuffer getBufferWidth() {
 		return bufferWidth;
 	}

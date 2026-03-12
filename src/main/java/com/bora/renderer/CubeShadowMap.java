@@ -41,6 +41,11 @@ public class CubeShadowMap {
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 	}
 	
+
+    // =========================================================================
+    //  GETTERS
+    // =========================================================================
+	
 	public int getDepthMap() { return depthMap; }
 	public int getDepthMapFBO() { return depthMapFBO; }
 	
