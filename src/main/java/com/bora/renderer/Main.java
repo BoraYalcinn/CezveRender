@@ -84,6 +84,7 @@ public class Main {
         // initiliaze floor
         Texture grass = new Texture("textures/grass.jpg"); grass.loadTexture();
         scene.setFloor(MeshFactory.createFloor(10f, -3f), grass, new Material(256f, 0f));
+        
 
         // create initial model
         Model object = new Model("models/TaleWorlds.obj");

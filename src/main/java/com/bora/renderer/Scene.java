@@ -83,7 +83,10 @@ public class Scene {
             glViewport(0, 0, 1024, 1024);
             glClear(GL_DEPTH_BUFFER_BIT);
             shadowShader.setUniformMat4f(shadowShader.getUniformLightSpaceMatrix(), s.getLightSpaceMatrix());
+            glEnable(GL_CULL_FACE); glCullFace(GL_FRONT);
             renderAllObjects(shadowShader);
+            glDisable(GL_CULL_FACE);
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, windowWidth, windowHeight);
         }
