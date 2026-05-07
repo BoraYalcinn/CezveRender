@@ -1,5 +1,6 @@
 <div align="center">
-<img width="512" height="1024" alt="CezveRenderer" src="https://github.com/user-attachments/assets/2d34fe7c-6040-4277-932d-07ffe0909d4b" />
+<img width="1024" height="1024" alt="CezveRenderer" src="https://github.com/user-attachments/assets/8f9e364c-fe48-475c-ae38-2b25cf90a2a7" />
+
 
 # CezveRender
 
