@@ -18,6 +18,7 @@ public class MeshFactory {
 
         Mesh m = new Mesh();
         m.createMesh(vertices, indices);
+        m.renderMesh();
         return m;
     }
     
